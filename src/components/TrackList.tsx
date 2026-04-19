@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
-import type { Project, TrackEffects } from "../types";
+import type { Project, Track as TrackType, TrackEffects } from "../types";
 import { Track } from "./Track";
 import { getTrackColor } from "../lib/constants";
+import { PRESETS } from "../lib/presets";
 
 interface TrackListProps {
   project: Project;
@@ -33,6 +34,7 @@ interface TrackListProps {
     velocity: number,
   ) => void;
   onSetEffects: (trackId: string, effects: Partial<TrackEffects>) => void;
+  onAddPresetTracks: (tracks: TrackType[]) => void;
 }
 
 export function TrackList({
@@ -55,6 +57,7 @@ export function TrackList({
   onDuplicateTrack,
   onSetVelocity,
   onSetEffects,
+  onAddPresetTracks,
 }: TrackListProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -137,6 +140,26 @@ export function TrackList({
         <button className="add-track-btn" onClick={() => onAddTrack("melodic")}>
           🎹 Add Synth Track
         </button>
+        <select
+          className="add-track-btn add-preset-select"
+          value=""
+          onChange={(e) => {
+            const idx = Number(e.target.value);
+            if (!isNaN(idx)) {
+              const preset = PRESETS[idx].build();
+              onAddPresetTracks(preset.tracks);
+            }
+          }}
+        >
+          <option value="" disabled>
+            🎵 Load Preset
+          </option>
+          {PRESETS.map((p, i) => (
+            <option key={p.name} value={i}>
+              {p.name}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

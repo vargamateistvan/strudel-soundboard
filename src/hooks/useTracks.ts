@@ -73,6 +73,7 @@ type Action =
   | { type: "ADD_DRUM_ROW"; trackId: string; drumSound: string }
   | { type: "REMOVE_DRUM_ROW"; trackId: string; rowIndex: number }
   | { type: "IMPORT_PROJECT"; project: Project }
+  | { type: "ADD_PRESET_TRACKS"; tracks: import("../types").Track[] }
   | { type: "REORDER_TRACKS"; fromIndex: number; toIndex: number }
   | { type: "DUPLICATE_TRACK"; trackId: string }
   | {
@@ -242,6 +243,18 @@ function reducer(state: Project, action: Action): Project {
 
     case "IMPORT_PROJECT":
       return { ...action.project };
+
+    case "ADD_PRESET_TRACKS":
+      return {
+        ...state,
+        tracks: [
+          ...state.tracks,
+          ...action.tracks.map((t) => ({
+            ...t,
+            id: `track-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          })),
+        ],
+      };
 
     case "REORDER_TRACKS": {
       const tracks = [...state.tracks];
@@ -444,6 +457,10 @@ export function useTracks() {
     dispatch({ type: "IMPORT_PROJECT", project });
   }, []);
 
+  const addPresetTracks = useCallback((tracks: import("../types").Track[]) => {
+    dispatch({ type: "ADD_PRESET_TRACKS", tracks });
+  }, []);
+
   const reorderTracks = useCallback((fromIndex: number, toIndex: number) => {
     dispatch({ type: "REORDER_TRACKS", fromIndex, toIndex });
   }, []);
@@ -499,6 +516,7 @@ export function useTracks() {
     addDrumRow,
     removeDrumRow,
     importProject,
+    addPresetTracks,
     reorderTracks,
     duplicateTrack,
     setVelocity,

@@ -180,6 +180,7 @@ export default function App() {
             onDuplicateTrack={tracks.duplicateTrack}
             onSetVelocity={tracks.setVelocity}
             onSetEffects={tracks.setEffects}
+            onAddPresetTracks={tracks.addPresetTracks}
           />
         </div>
 
