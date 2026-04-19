@@ -182,6 +182,7 @@ async function ensureStrudel() {
 export function useStrudel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const currentCodeRef = useRef<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -189,7 +190,12 @@ export function useStrudel() {
     // Initialize eagerly — AudioContext will auto-resume on first interaction
     ensureStrudel()
       .then(() => setReady(true))
-      .catch((err) => console.error("Failed to initialize Strudel:", err));
+      .catch((err) => {
+        console.error("Failed to initialize Strudel:", err);
+        setError(
+          "Failed to load audio engine. Check your connection and reload.",
+        );
+      });
   }, []);
 
   const play = useCallback(async (code: string) => {
@@ -203,11 +209,15 @@ export function useStrudel() {
       unlockAudio();
       currentCodeRef.current = code;
       setIsPlaying(true);
-      evaluateFn!(code).catch((err: unknown) =>
-        console.error("Strudel evaluate error:", err),
-      );
+      evaluateFn!(code).catch((err: unknown) => {
+        console.error("Strudel evaluate error:", err);
+        setError("Failed to play pattern. Please try again.");
+      });
     } catch (err) {
       console.error("Strudel play error:", err);
+      setError(
+        "Failed to load audio engine. Check your connection and reload.",
+      );
     }
   }, []);
 
@@ -243,5 +253,13 @@ export function useStrudel() {
     }
   }, []);
 
-  return { play, stop, preview, isPlaying, ready };
+  return {
+    play,
+    stop,
+    preview,
+    isPlaying,
+    ready,
+    error,
+    clearError: () => setError(null),
+  };
 }

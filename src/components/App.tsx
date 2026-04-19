@@ -11,6 +11,7 @@ import { ImportModal } from "./ImportModal";
 import { SaveLoadModal } from "./SaveLoadModal";
 import { useRecorder } from "../hooks/useRecorder";
 import { useAnalyser } from "../hooks/useAnalyser";
+import { Snackbar } from "./Snackbar";
 import "./App.css";
 
 export default function App() {
@@ -280,6 +281,8 @@ export default function App() {
           onClose={() => setShowSaveLoad(false)}
         />
       )}
+
+      <Snackbar message={strudel.error} onClose={strudel.clearError} />
     </div>
   );
 }
