@@ -17,6 +17,17 @@ function createEmptySteps(rowCount: number, stepCount: number): Step[][] {
 
 let nextId = 1;
 
+/** Ensure nextId is higher than any existing track ID to prevent collisions */
+function syncNextId(tracks: { id: string }[]) {
+  for (const t of tracks) {
+    const m = t.id.match(/^track-(\d+)/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= nextId) nextId = n + 1;
+    }
+  }
+}
+
 function createDrumTrack(stepCount: number): Track {
   const rows = [...DEFAULT_DRUM_ROWS];
   return {
@@ -85,6 +96,12 @@ type Action =
     }
   | { type: "SET_EFFECTS"; trackId: string; effects: Partial<TrackEffects> }
   | { type: "SET_SWING"; swing: number }
+  | {
+      type: "INSERT_TRACK_AFTER";
+      afterTrackId: string;
+      trackType: "drums" | "melodic";
+    }
+  | { type: "SET_LOOP_LENGTH"; trackId: string; loopLength: number | undefined }
   | { type: "UNDO" }
   | { type: "REDO" };
 
@@ -242,9 +259,11 @@ function reducer(state: Project, action: Action): Project {
       };
 
     case "IMPORT_PROJECT":
+      syncNextId(action.project.tracks);
       return { ...action.project };
 
     case "ADD_PRESET_TRACKS":
+      syncNextId(action.tracks);
       return {
         ...state,
         tracks: [
@@ -316,6 +335,29 @@ function reducer(state: Project, action: Action): Project {
     case "SET_SWING":
       return { ...state, swing: action.swing };
 
+    case "INSERT_TRACK_AFTER": {
+      const newTrack =
+        action.trackType === "drums"
+          ? createDrumTrack(state.stepCount)
+          : createMelodicTrack(state.stepCount);
+      const afterIdx = state.tracks.findIndex(
+        (t) => t.id === action.afterTrackId,
+      );
+      if (afterIdx === -1)
+        return { ...state, tracks: [...state.tracks, newTrack] };
+      const tracks = [...state.tracks];
+      tracks.splice(afterIdx + 1, 0, newTrack);
+      return { ...state, tracks };
+    }
+
+    case "SET_LOOP_LENGTH":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) =>
+          t.id === action.trackId ? { ...t, loopLength: action.loopLength } : t,
+        ),
+      };
+
     default:
       return state;
   }
@@ -376,6 +418,7 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
 
 function createInitialHistory(): HistoryState {
   const restored = autoLoad();
+  if (restored) syncNextId(restored.tracks);
   return {
     past: [],
     present: restored ?? initialProject,
@@ -494,6 +537,20 @@ export function useTracks() {
     dispatch({ type: "SET_SWING", swing });
   }, []);
 
+  const insertTrackAfter = useCallback(
+    (afterTrackId: string, trackType: "drums" | "melodic") => {
+      dispatch({ type: "INSERT_TRACK_AFTER", afterTrackId, trackType });
+    },
+    [],
+  );
+
+  const setLoopLength = useCallback(
+    (trackId: string, loopLength: number | undefined) => {
+      dispatch({ type: "SET_LOOP_LENGTH", trackId, loopLength });
+    },
+    [],
+  );
+
   const setStep = useCallback(
     (trackId: string, row: number, col: number, active: boolean) => {
       dispatch({ type: "SET_STEP", trackId, row, col, active });
@@ -530,6 +587,8 @@ export function useTracks() {
     setVelocity,
     setEffects,
     setSwing,
+    insertTrackAfter,
+    setLoopLength,
     undo,
     redo,
   };

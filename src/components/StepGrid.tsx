@@ -22,6 +22,7 @@ export function StepGrid({
   onSetVelocity,
 }: StepGridProps) {
   const stepCount = track.steps[0]?.length ?? 16;
+  const loopLen = track.loopLength;
   const [painting, setPainting] = useState<boolean | null>(null);
 
   const handlePointerDown = useCallback(
@@ -97,6 +98,7 @@ export function StepGrid({
                     step.active ? "step-active" : "",
                     colIdx === currentStep ? "step-current" : "",
                     colIdx % 4 === 0 ? "step-beat" : "",
+                    loopLen && colIdx >= loopLen ? "step-outside-loop" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -124,18 +126,21 @@ export function StepGrid({
         ))}
       </div>
 
-      {/* Step numbers */}
+      {/* Step numbers / bar markers */}
       <div className="step-numbers">
         <div className="row-label" />
         <div className="step-cells">
-          {Array.from({ length: stepCount }, (_, i) => (
-            <div
-              key={i}
-              className={`step-number ${i % 4 === 0 ? "step-beat-num" : ""}`}
-            >
-              {i + 1}
-            </div>
-          ))}
+          {Array.from({ length: stepCount }, (_, i) => {
+            const showLabel = stepCount <= 32 || i % 4 === 0;
+            return (
+              <div
+                key={i}
+                className={`step-number ${i % 4 === 0 ? "step-beat-num" : ""} ${i % 16 === 0 ? "step-bar-num" : ""}`}
+              >
+                {showLabel ? i + 1 : ""}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import { EffectsPanel } from "./EffectsPanel";
 
 interface TrackHeaderProps {
   track: Track;
+  stepCount: number;
   onSetSound: (sound: string) => void;
   onSetBank: (bank: string) => void;
   onToggleMute: () => void;
@@ -15,10 +16,12 @@ interface TrackHeaderProps {
   onSetName: (name: string) => void;
   onAddDrumRow: (sound: string) => void;
   onSetEffects: (effects: Partial<TrackEffects>) => void;
+  onSetLoopLength: (loopLength: number | undefined) => void;
 }
 
 export function TrackHeader({
   track,
+  stepCount,
   onSetSound,
   onSetBank,
   onToggleMute,
@@ -29,6 +32,7 @@ export function TrackHeader({
   onSetName,
   onAddDrumRow,
   onSetEffects,
+  onSetLoopLength,
 }: TrackHeaderProps) {
   const [showFx, setShowFx] = useState(false);
   const availableDrums = DRUM_SOUNDS.filter((d) => !track.rows.includes(d));
@@ -140,6 +144,24 @@ export function TrackHeader({
         >
           FX
         </button>
+        <select
+          className="track-select loop-select"
+          value={track.loopLength ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            onSetLoopLength(val ? Number(val) : undefined);
+          }}
+          title="Loop length"
+        >
+          <option value="">🔁 All</option>
+          {[4, 8, 12, 16, 24, 32, 48, 64, 128]
+            .filter((n) => n <= stepCount)
+            .map((n) => (
+              <option key={n} value={n}>
+                🔁 {n}
+              </option>
+            ))}
+        </select>
       </div>
 
       {showFx && (

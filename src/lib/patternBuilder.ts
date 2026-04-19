@@ -47,19 +47,23 @@ function buildTrackPattern(track: Track): string | null {
 
 function buildDrumPattern(track: Track): string | null {
   const rowPatterns: string[] = [];
+  const len = track.loopLength ?? track.steps[0]?.length ?? 0;
 
   for (let rowIdx = 0; rowIdx < track.rows.length; rowIdx++) {
     const row = track.steps[rowIdx];
     if (!row) continue;
-    const hasActive = row.some((s) => s.active);
+    const sliced = row.slice(0, len);
+    const hasActive = sliced.some((s) => s.active);
     if (!hasActive) continue;
 
     const drumName = track.rows[rowIdx];
-    const stepStrs = row.map((s) => (s.active ? drumName : "~"));
-    const hasVelocity = row.some((s) => s.active && s.velocity !== 1);
+    const stepStrs = sliced.map((s) => (s.active ? drumName : "~"));
+    const hasVelocity = sliced.some((s) => s.active && s.velocity !== 1);
     let rp = `s("${stepStrs.join(" ")}")`;
     if (hasVelocity) {
-      const velStrs = row.map((s) => (s.active ? s.velocity.toFixed(1) : "1"));
+      const velStrs = sliced.map((s) =>
+        s.active ? s.velocity.toFixed(1) : "1",
+      );
       rp += `.velocity("${velStrs.join(" ")}")`;
     }
     rowPatterns.push(rp);
@@ -85,7 +89,8 @@ function buildDrumPattern(track: Track): string | null {
 }
 
 function buildMelodicPattern(track: Track): string | null {
-  const stepCount = track.steps[0]?.length ?? 0;
+  const totalSteps = track.steps[0]?.length ?? 0;
+  const stepCount = track.loopLength ?? totalSteps;
   const stepNotes: string[] = [];
 
   for (let col = 0; col < stepCount; col++) {

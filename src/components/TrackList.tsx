@@ -35,6 +35,8 @@ interface TrackListProps {
   ) => void;
   onSetEffects: (trackId: string, effects: Partial<TrackEffects>) => void;
   onAddPresetTracks: (tracks: TrackType[]) => void;
+  onInsertTrackAfter: (afterTrackId: string, type: "drums" | "melodic") => void;
+  onSetLoopLength: (trackId: string, loopLength: number | undefined) => void;
 }
 
 export function TrackList({
@@ -58,11 +60,19 @@ export function TrackList({
   onSetVelocity,
   onSetEffects,
   onAddPresetTracks,
+  onInsertTrackAfter,
+  onSetLoopLength,
 }: TrackListProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
   const handleDragStart = useCallback((idx: number, e: React.DragEvent) => {
+    // Don't start drag from interactive elements
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === "SELECT" || tag === "INPUT" || tag === "BUTTON") {
+      e.preventDefault();
+      return;
+    }
     setDragIdx(idx);
     e.dataTransfer.effectAllowed = "move";
   }, []);
@@ -74,7 +84,8 @@ export function TrackList({
   }, []);
 
   const handleDrop = useCallback(
-    (idx: number) => {
+    (idx: number, e: React.DragEvent) => {
+      e.preventDefault();
       if (dragIdx !== null && dragIdx !== idx) {
         onReorderTracks(dragIdx, idx);
       }
@@ -103,13 +114,14 @@ export function TrackList({
           draggable
           onDragStart={(e) => handleDragStart(idx, e)}
           onDragOver={(e) => handleDragOver(idx, e)}
-          onDrop={() => handleDrop(idx)}
+          onDrop={(e) => handleDrop(idx, e)}
           onDragEnd={handleDragEnd}
         >
           <Track
             track={track}
             color={getTrackColor(idx)}
             currentStep={currentStep}
+            stepCount={project.stepCount}
             onToggleStep={(row, col) => onToggleStep(track.id, row, col)}
             onSetStep={(row, col, active) =>
               onSetStep(track.id, row, col, active)
@@ -129,6 +141,8 @@ export function TrackList({
               onSetVelocity(track.id, row, col, vel)
             }
             onSetEffects={(fx) => onSetEffects(track.id, fx)}
+            onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
+            onInsertAfter={(type) => onInsertTrackAfter(track.id, type)}
           />
         </div>
       ))}

@@ -37,6 +37,7 @@ export interface Track {
   solo: boolean;
   volume: number;
   effects: TrackEffects;
+  loopLength?: number; // if set, pattern loops at this many steps (e.g. 4, 8)
 }
 
 export interface Project {

@@ -190,6 +190,8 @@ export default function App() {
             onSetVelocity={tracks.setVelocity}
             onSetEffects={tracks.setEffects}
             onAddPresetTracks={tracks.addPresetTracks}
+            onInsertTrackAfter={tracks.insertTrackAfter}
+            onSetLoopLength={tracks.setLoopLength}
           />
         </div>
 

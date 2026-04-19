@@ -6,6 +6,7 @@ interface TrackProps {
   track: TrackType;
   color: string;
   currentStep: number;
+  stepCount: number;
   onToggleStep: (row: number, col: number) => void;
   onSetStep: (row: number, col: number, active: boolean) => void;
   onSetSound: (sound: string) => void;
@@ -21,12 +22,15 @@ interface TrackProps {
   onPreviewRow: (rowLabel: string) => void;
   onSetVelocity: (row: number, col: number, velocity: number) => void;
   onSetEffects: (effects: Partial<TrackEffects>) => void;
+  onSetLoopLength: (loopLength: number | undefined) => void;
+  onInsertAfter: (type: "drums" | "melodic") => void;
 }
 
 export function Track({
   track,
   color,
   currentStep,
+  stepCount,
   onToggleStep,
   onSetStep,
   onSetSound,
@@ -42,6 +46,8 @@ export function Track({
   onPreviewRow,
   onSetVelocity,
   onSetEffects,
+  onSetLoopLength,
+  onInsertAfter,
 }: TrackProps) {
   // VU meter: calculate activity level at current step
   let vuLevel = 0;
@@ -65,6 +71,7 @@ export function Track({
       />
       <TrackHeader
         track={track}
+        stepCount={stepCount}
         onSetSound={onSetSound}
         onSetBank={onSetBank}
         onToggleMute={onToggleMute}
@@ -75,6 +82,7 @@ export function Track({
         onSetName={onSetName}
         onAddDrumRow={onAddDrumRow}
         onSetEffects={onSetEffects}
+        onSetLoopLength={onSetLoopLength}
       />
       <StepGrid
         track={track}
@@ -86,6 +94,23 @@ export function Track({
         onPreviewRow={onPreviewRow}
         onSetVelocity={onSetVelocity}
       />
+      <div className="insert-after-bar">
+        <select
+          className="insert-after-select"
+          value=""
+          onChange={(e) => {
+            if (e.target.value)
+              onInsertAfter(e.target.value as "drums" | "melodic");
+          }}
+          title="Insert track after"
+        >
+          <option value="" disabled>
+            +
+          </option>
+          <option value="drums">🥁 Drum</option>
+          <option value="melodic">🎹 Synth</option>
+        </select>
+      </div>
     </div>
   );
 }
