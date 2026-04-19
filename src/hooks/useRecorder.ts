@@ -128,7 +128,7 @@ export function useRecorder() {
       return;
     }
 
-    const mp3Blob = new Blob(mp3Bufs, { type: "audio/mpeg" });
+    const mp3Blob = new Blob(mp3Bufs as BlobPart[], { type: "audio/mpeg" });
     const url = URL.createObjectURL(mp3Blob);
     const a = document.createElement("a");
     a.href = url;
