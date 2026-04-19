@@ -5,6 +5,7 @@ import {
   DRUM_SOUNDS,
   SYNTH_SOUNDS,
   PIANO_SOUNDS,
+  GUITAR_SOUNDS,
   BANKS,
 } from "../lib/constants";
 import { EffectsPanel } from "./EffectsPanel";
@@ -109,6 +110,20 @@ export function TrackHeader({
             onChange={(e) => onSetSound(e.target.value)}
           >
             {PIANO_SOUNDS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {track.type === "guitar" && (
+          <select
+            className="track-select"
+            value={track.sound}
+            onChange={(e) => onSetSound(e.target.value)}
+          >
+            {GUITAR_SOUNDS.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>

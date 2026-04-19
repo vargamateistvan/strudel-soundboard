@@ -145,6 +145,32 @@ async function ensureStrudel() {
             "G#3":
               "Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_G%233_k4_vl3_rr2.wav",
           },
+          guitar: {
+            D2: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str1_Main_D2_vl2_rr1.wav",
+            E2: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str1_Main_E2_vl2_rr1.wav",
+            "F#2":
+              "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str1_Main_F%232_vl2_rr1.wav",
+            G2: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str1_Main_G2_vl2_rr1.wav",
+            A2: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str2_Main_A2_vl2_rr1.wav",
+            B2: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str2_Main_B2_vl2_rr1.wav",
+            "C#3":
+              "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str2_Main_C%233_vl2_rr1.wav",
+            D3: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str2_Main_D3_vl2_rr1.wav",
+            E3: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_E3_vl2_rr1.wav",
+            "F#3":
+              "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_F%233_vl2_rr1.wav",
+            G3: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_G3_vl2_rr1.wav",
+            A3: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_A3_vl2_rr1.wav",
+            B3: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_B3_vl2_rr1.wav",
+            "C#4":
+              "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_C%234_vl2_rr1.wav",
+            D4: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_D4_vl2_rr1.wav",
+            E4: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_E4_vl2_rr1.wav",
+            "F#4":
+              "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_F%234_vl2_rr1.wav",
+            G4: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_G4_vl1_rr1.wav",
+            A4: "Chordophones/Composite%20Chordophones/Strumstick/Finger/Strumstick_Finger_Str3_Main_A4_vl2_rr1.wav",
+          },
         },
         vcslBase,
       );

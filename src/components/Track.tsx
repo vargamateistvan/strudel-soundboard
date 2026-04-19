@@ -34,7 +34,7 @@ interface TrackProps {
   onRandomizePattern: (density: number) => void;
   onClearTrack: () => void;
   onReverseSteps: () => void;
-  onInsertAfter: (type: "drums" | "melodic" | "piano") => void;
+  onInsertAfter: (type: "drums" | "melodic" | "piano" | "guitar") => void;
 }
 
 export function Track({
@@ -125,7 +125,9 @@ export function Track({
           value=""
           onChange={(e) => {
             if (e.target.value)
-              onInsertAfter(e.target.value as "drums" | "melodic" | "piano");
+              onInsertAfter(
+                e.target.value as "drums" | "melodic" | "piano" | "guitar",
+              );
           }}
           title="Insert track after"
         >
@@ -135,6 +137,7 @@ export function Track({
           <option value="drums">🥁 Drum</option>
           <option value="melodic">🎹 Synth</option>
           <option value="piano">🎵 Piano</option>
+          <option value="guitar">🎸 Guitar</option>
         </select>
       </div>
     </div>

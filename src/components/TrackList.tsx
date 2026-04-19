@@ -12,7 +12,7 @@ import { PRESETS } from "../lib/presets";
 interface TrackListProps {
   project: Project;
   currentStep: number;
-  onAddTrack: (type: "drums" | "melodic" | "piano") => void;
+  onAddTrack: (type: "drums" | "melodic" | "piano" | "guitar") => void;
   onRemoveTrack: (trackId: string) => void;
   onToggleStep: (trackId: string, row: number, col: number) => void;
   onSetStep: (
@@ -43,7 +43,7 @@ interface TrackListProps {
   onAddPresetTracks: (tracks: TrackType[]) => void;
   onInsertTrackAfter: (
     afterTrackId: string,
-    type: "drums" | "melodic" | "piano",
+    type: "drums" | "melodic" | "piano" | "guitar",
   ) => void;
   onSetLoopLength: (trackId: string, loopLength: number | undefined) => void;
   onCopySteps: (trackId: string) => void;
@@ -187,6 +187,9 @@ export function TrackList({
         </button>
         <button className="add-track-btn" onClick={() => onAddTrack("piano")}>
           🎵 Add Piano Track
+        </button>
+        <button className="add-track-btn" onClick={() => onAddTrack("guitar")}>
+          🎸 Add Guitar Track
         </button>
         <select
           className="add-track-btn add-preset-select"

@@ -31,6 +31,8 @@ export const PIANO_SOUNDS = [
   "kalimba",
 ] as const;
 
+export const GUITAR_SOUNDS = ["guitar"] as const;
+
 export const BANKS = [
   "", // default (no bank)
   "RolandTR808",

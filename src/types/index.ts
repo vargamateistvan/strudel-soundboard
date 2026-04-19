@@ -1,4 +1,4 @@
-export type TrackType = "drums" | "melodic" | "piano";
+export type TrackType = "drums" | "melodic" | "piano" | "guitar";
 
 export interface Step {
   active: boolean;
