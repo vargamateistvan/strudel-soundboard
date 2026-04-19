@@ -5,6 +5,29 @@ let evaluateFn: ((code: string) => Promise<void>) | null = null;
 let hushFn: (() => void) | null = null;
 let getAudioContextFn: (() => AudioContext) | null = null;
 
+/**
+ * Unlock the AudioContext for iOS Safari.
+ * Must be called synchronously within a user-gesture handler.
+ * Plays a silent buffer + resumes the context.
+ */
+export function unlockAudio() {
+  if (!getAudioContextFn) return;
+  const ctx = getAudioContextFn();
+  // Play a 1-sample silent buffer to fully unlock iOS audio output
+  try {
+    const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {
+    // ignore — context may not support createBuffer yet
+  }
+  if (ctx.state === "suspended") {
+    ctx.resume();
+  }
+}
+
 async function ensureStrudel() {
   if (!strudelReady) {
     strudelReady = (async () => {
@@ -41,13 +64,8 @@ export function useStrudel() {
         await ensureStrudel();
         setReady(true);
       }
-      // Resume AudioContext — MUST be awaited during user gesture for mobile browsers
-      if (getAudioContextFn) {
-        const ctx = getAudioContextFn() as AudioContext;
-        if (ctx.state === "suspended") {
-          await ctx.resume();
-        }
-      }
+      // Unlock AudioContext for iOS Safari (silent buffer + resume)
+      unlockAudio();
       currentCodeRef.current = code;
       setIsPlaying(true);
       evaluateFn!(code).catch((err: unknown) =>
@@ -72,13 +90,8 @@ export function useStrudel() {
     try {
       await ensureStrudel();
       setReady(true);
-      // Resume AudioContext for mobile
-      if (getAudioContextFn) {
-        const ctx = getAudioContextFn() as AudioContext;
-        if (ctx.state === "suspended") {
-          await ctx.resume();
-        }
-      }
+      // Unlock AudioContext for iOS Safari
+      unlockAudio();
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
       const wasPlaying = currentCodeRef.current;
       await evaluateFn!(code);

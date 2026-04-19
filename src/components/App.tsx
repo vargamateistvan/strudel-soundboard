@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { useStrudel } from "../hooks/useStrudel";
+import { useStrudel, unlockAudio } from "../hooks/useStrudel";
 import { useTracks } from "../hooks/useTracks";
 import { buildPatternCode } from "../lib/patternBuilder";
 import { Toolbar } from "./Toolbar";
@@ -43,27 +43,18 @@ export default function App() {
     }
   }, [strudel.ready, analyser]);
 
-  // Resume AudioContext on first user interaction (mobile browsers require this)
+  // Unlock AudioContext on first user interaction (iOS Safari requires synchronous unlock)
   useEffect(() => {
-    const resume = async () => {
-      try {
-        // @ts-expect-error — getAudioContext is exported but not typed
-        const { getAudioContext } = await import("@strudel/web");
-        const ctx = getAudioContext() as AudioContext;
-        if (ctx?.state === "suspended") {
-          await ctx.resume();
-        }
-      } catch {
-        // Strudel not ready yet — that's fine, play() will handle it
-      }
-      window.removeEventListener("touchstart", resume);
-      window.removeEventListener("click", resume);
+    const handler = () => {
+      unlockAudio();
+      window.removeEventListener("touchstart", handler);
+      window.removeEventListener("click", handler);
     };
-    window.addEventListener("touchstart", resume, { once: true });
-    window.addEventListener("click", resume, { once: true });
+    window.addEventListener("touchstart", handler, { once: true });
+    window.addEventListener("click", handler, { once: true });
     return () => {
-      window.removeEventListener("touchstart", resume);
-      window.removeEventListener("click", resume);
+      window.removeEventListener("touchstart", handler);
+      window.removeEventListener("click", handler);
     };
   }, []);
 
