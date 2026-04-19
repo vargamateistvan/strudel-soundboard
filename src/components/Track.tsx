@@ -1,4 +1,8 @@
-import type { Track as TrackType, TrackEffects } from "../types";
+import type {
+  Track as TrackType,
+  TrackEffects,
+  TrackModifiers,
+} from "../types";
 import { TrackHeader } from "./TrackHeader";
 import { StepGrid } from "./StepGrid";
 
@@ -22,7 +26,14 @@ interface TrackProps {
   onPreviewRow: (rowLabel: string) => void;
   onSetVelocity: (row: number, col: number, velocity: number) => void;
   onSetEffects: (effects: Partial<TrackEffects>) => void;
+  onSetModifiers: (modifiers: Partial<TrackModifiers>) => void;
   onSetLoopLength: (loopLength: number | undefined) => void;
+  onCopySteps: () => void;
+  onPasteSteps: () => void;
+  onShiftPattern: (direction: 1 | -1) => void;
+  onRandomizePattern: (density: number) => void;
+  onClearTrack: () => void;
+  onReverseSteps: () => void;
   onInsertAfter: (type: "drums" | "melodic") => void;
 }
 
@@ -46,7 +57,14 @@ export function Track({
   onPreviewRow,
   onSetVelocity,
   onSetEffects,
+  onSetModifiers,
   onSetLoopLength,
+  onCopySteps,
+  onPasteSteps,
+  onShiftPattern,
+  onRandomizePattern,
+  onClearTrack,
+  onReverseSteps,
   onInsertAfter,
 }: TrackProps) {
   // VU meter: calculate activity level at current step
@@ -82,7 +100,14 @@ export function Track({
         onSetName={onSetName}
         onAddDrumRow={onAddDrumRow}
         onSetEffects={onSetEffects}
+        onSetModifiers={onSetModifiers}
         onSetLoopLength={onSetLoopLength}
+        onCopySteps={onCopySteps}
+        onPasteSteps={onPasteSteps}
+        onShiftPattern={onShiftPattern}
+        onRandomizePattern={onRandomizePattern}
+        onClearTrack={onClearTrack}
+        onReverseSteps={onReverseSteps}
       />
       <StepGrid
         track={track}

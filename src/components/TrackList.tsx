@@ -1,5 +1,10 @@
 import { useState, useCallback } from "react";
-import type { Project, Track as TrackType, TrackEffects } from "../types";
+import type {
+  Project,
+  Track as TrackType,
+  TrackEffects,
+  TrackModifiers,
+} from "../types";
 import { Track } from "./Track";
 import { getTrackColor } from "../lib/constants";
 import { PRESETS } from "../lib/presets";
@@ -34,9 +39,16 @@ interface TrackListProps {
     velocity: number,
   ) => void;
   onSetEffects: (trackId: string, effects: Partial<TrackEffects>) => void;
+  onSetModifiers: (trackId: string, modifiers: Partial<TrackModifiers>) => void;
   onAddPresetTracks: (tracks: TrackType[]) => void;
   onInsertTrackAfter: (afterTrackId: string, type: "drums" | "melodic") => void;
   onSetLoopLength: (trackId: string, loopLength: number | undefined) => void;
+  onCopySteps: (trackId: string) => void;
+  onPasteSteps: (trackId: string) => void;
+  onShiftPattern: (trackId: string, direction: 1 | -1) => void;
+  onRandomizePattern: (trackId: string, density: number) => void;
+  onClearTrack: (trackId: string) => void;
+  onReverseSteps: (trackId: string) => void;
 }
 
 export function TrackList({
@@ -59,9 +71,16 @@ export function TrackList({
   onDuplicateTrack,
   onSetVelocity,
   onSetEffects,
+  onSetModifiers,
   onAddPresetTracks,
   onInsertTrackAfter,
   onSetLoopLength,
+  onCopySteps,
+  onPasteSteps,
+  onShiftPattern,
+  onRandomizePattern,
+  onClearTrack,
+  onReverseSteps,
 }: TrackListProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -141,7 +160,16 @@ export function TrackList({
               onSetVelocity(track.id, row, col, vel)
             }
             onSetEffects={(fx) => onSetEffects(track.id, fx)}
+            onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
             onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
+            onCopySteps={() => onCopySteps(track.id)}
+            onPasteSteps={() => onPasteSteps(track.id)}
+            onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
+            onRandomizePattern={(density) =>
+              onRandomizePattern(track.id, density)
+            }
+            onClearTrack={() => onClearTrack(track.id)}
+            onReverseSteps={() => onReverseSteps(track.id)}
             onInsertAfter={(type) => onInsertTrackAfter(track.id, type)}
           />
         </div>

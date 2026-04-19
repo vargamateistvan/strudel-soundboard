@@ -1,7 +1,9 @@
 import { useState } from "react";
-import type { Track, TrackEffects } from "../types";
+import type { Track, TrackEffects, TrackModifiers } from "../types";
+import { DEFAULT_MODIFIERS } from "../types";
 import { DRUM_SOUNDS, SYNTH_SOUNDS, BANKS } from "../lib/constants";
 import { EffectsPanel } from "./EffectsPanel";
+import { ModifiersPanel } from "./ModifiersPanel";
 
 interface TrackHeaderProps {
   track: Track;
@@ -16,7 +18,14 @@ interface TrackHeaderProps {
   onSetName: (name: string) => void;
   onAddDrumRow: (sound: string) => void;
   onSetEffects: (effects: Partial<TrackEffects>) => void;
+  onSetModifiers: (modifiers: Partial<TrackModifiers>) => void;
   onSetLoopLength: (loopLength: number | undefined) => void;
+  onCopySteps: () => void;
+  onPasteSteps: () => void;
+  onShiftPattern: (direction: 1 | -1) => void;
+  onRandomizePattern: (density: number) => void;
+  onClearTrack: () => void;
+  onReverseSteps: () => void;
 }
 
 export function TrackHeader({
@@ -32,9 +41,18 @@ export function TrackHeader({
   onSetName,
   onAddDrumRow,
   onSetEffects,
+  onSetModifiers,
   onSetLoopLength,
+  onCopySteps,
+  onPasteSteps,
+  onShiftPattern,
+  onRandomizePattern,
+  onClearTrack,
+  onReverseSteps,
 }: TrackHeaderProps) {
   const [showFx, setShowFx] = useState(false);
+  const [showMod, setShowMod] = useState(false);
+  const [showTools, setShowTools] = useState(false);
   const availableDrums = DRUM_SOUNDS.filter((d) => !track.rows.includes(d));
 
   return (
@@ -144,6 +162,20 @@ export function TrackHeader({
         >
           FX
         </button>
+        <button
+          className={`toggle-btn mod-btn ${showMod ? "active" : ""}`}
+          onClick={() => setShowMod(!showMod)}
+          title="Pattern Modifiers"
+        >
+          MOD
+        </button>
+        <button
+          className={`toggle-btn tools-btn ${showTools ? "active" : ""}`}
+          onClick={() => setShowTools(!showTools)}
+          title="Pattern Tools"
+        >
+          ✂
+        </button>
         <select
           className="track-select loop-select"
           value={track.loopLength ?? ""}
@@ -166,6 +198,67 @@ export function TrackHeader({
 
       {showFx && (
         <EffectsPanel effects={track.effects} onChange={onSetEffects} />
+      )}
+
+      {showMod && (
+        <ModifiersPanel
+          modifiers={track.modifiers ?? DEFAULT_MODIFIERS}
+          onChange={onSetModifiers}
+        />
+      )}
+
+      {showTools && (
+        <div className="pattern-tools">
+          <button
+            className="pattern-tool-btn"
+            onClick={onCopySteps}
+            title="Copy pattern"
+          >
+            📋 Copy
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={onPasteSteps}
+            title="Paste pattern"
+          >
+            📌 Paste
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={() => onShiftPattern(-1)}
+            title="Shift left"
+          >
+            ◀ Shift
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={() => onShiftPattern(1)}
+            title="Shift right"
+          >
+            Shift ▶
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={() => onRandomizePattern(0.3)}
+            title="Randomize (30% density)"
+          >
+            🎲 Random
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={onReverseSteps}
+            title="Reverse steps"
+          >
+            ↔ Reverse
+          </button>
+          <button
+            className="pattern-tool-btn"
+            onClick={onClearTrack}
+            title="Clear all steps"
+          >
+            🗑 Clear
+          </button>
+        </div>
       )}
     </div>
   );

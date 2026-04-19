@@ -1,4 +1,4 @@
-import type { Project, Track, TrackEffects } from "../types";
+import type { Project, Track, TrackEffects, TrackModifiers } from "../types";
 import { DEFAULT_EFFECTS } from "../types";
 
 /**
@@ -39,10 +39,16 @@ export function buildPatternCode(project: Project): string {
 }
 
 function buildTrackPattern(track: Track): string | null {
+  let pattern: string | null;
   if (track.type === "drums") {
-    return buildDrumPattern(track);
+    pattern = buildDrumPattern(track);
+  } else {
+    pattern = buildMelodicPattern(track);
   }
-  return buildMelodicPattern(track);
+  if (pattern && track.modifiers) {
+    pattern += buildModifiersChain(track.modifiers);
+  }
+  return pattern;
 }
 
 function buildDrumPattern(track: Track): string | null {
@@ -150,11 +156,44 @@ function buildEffectsChain(fx: TrackEffects | undefined): string {
   if (fx.lpf < d.lpf) {
     chain += `.lpf(${Math.round(fx.lpf)})`;
   }
+  if ((fx.hpf ?? 20) > 20) {
+    chain += `.hpf(${Math.round(fx.hpf)})`;
+  }
   if (fx.distort > 0) {
     chain += `.distort(${fx.distort.toFixed(2)})`;
   }
   if (fx.crush > 0) {
     chain += `.crush(${fx.crush})`;
+  }
+  if ((fx.pan ?? 0.5) !== 0.5) {
+    chain += `.pan(${fx.pan.toFixed(2)})`;
+  }
+  return chain;
+}
+
+function buildModifiersChain(mod: TrackModifiers): string {
+  let chain = "";
+  if (mod.reverse) {
+    chain += ".rev()";
+  }
+  if (mod.speed !== 1 && mod.speed > 0) {
+    if (mod.speed < 1) {
+      chain += `.slow(${(1 / mod.speed).toFixed(2)})`;
+    } else {
+      chain += `.fast(${mod.speed.toFixed(2)})`;
+    }
+  }
+  if (mod.probability < 1 && mod.probability >= 0) {
+    chain += `.degradeBy(${(1 - mod.probability).toFixed(2)})`;
+  }
+  if (mod.every) {
+    const inner =
+      mod.every.mod === "reverse"
+        ? "x => x.rev()"
+        : mod.every.mod === "double"
+          ? "x => x.fast(2)"
+          : "x => x.slow(2)";
+    chain += `.every(${mod.every.n}, ${inner})`;
   }
   return chain;
 }

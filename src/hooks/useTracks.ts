@@ -1,6 +1,12 @@
-import { useReducer, useCallback, useEffect } from "react";
-import type { Project, Track, Step, TrackEffects } from "../types";
-import { DEFAULT_EFFECTS } from "../types";
+import { useReducer, useCallback, useEffect, useRef } from "react";
+import type {
+  Project,
+  Track,
+  Step,
+  TrackEffects,
+  TrackModifiers,
+} from "../types";
+import { DEFAULT_EFFECTS, DEFAULT_MODIFIERS } from "../types";
 import {
   DEFAULT_BPM,
   DEFAULT_STEP_COUNT,
@@ -95,6 +101,11 @@ type Action =
       velocity: number;
     }
   | { type: "SET_EFFECTS"; trackId: string; effects: Partial<TrackEffects> }
+  | {
+      type: "SET_MODIFIERS";
+      trackId: string;
+      modifiers: Partial<TrackModifiers>;
+    }
   | { type: "SET_SWING"; swing: number }
   | {
       type: "INSERT_TRACK_AFTER";
@@ -102,6 +113,10 @@ type Action =
       trackType: "drums" | "melodic";
     }
   | { type: "SET_LOOP_LENGTH"; trackId: string; loopLength: number | undefined }
+  | { type: "SHIFT_PATTERN"; trackId: string; direction: 1 | -1 }
+  | { type: "RANDOMIZE_PATTERN"; trackId: string; density: number }
+  | { type: "CLEAR_TRACK"; trackId: string }
+  | { type: "REVERSE_STEPS"; trackId: string }
   | { type: "UNDO" }
   | { type: "REDO" };
 
@@ -332,6 +347,22 @@ function reducer(state: Project, action: Action): Project {
         ),
       };
 
+    case "SET_MODIFIERS":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) =>
+          t.id === action.trackId
+            ? {
+                ...t,
+                modifiers: {
+                  ...(t.modifiers ?? DEFAULT_MODIFIERS),
+                  ...action.modifiers,
+                },
+              }
+            : t,
+        ),
+      };
+
     case "SET_SWING":
       return { ...state, swing: action.swing };
 
@@ -356,6 +387,71 @@ function reducer(state: Project, action: Action): Project {
         tracks: state.tracks.map((t) =>
           t.id === action.trackId ? { ...t, loopLength: action.loopLength } : t,
         ),
+      };
+
+    case "SHIFT_PATTERN":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          const len = t.steps[0]?.length ?? 0;
+          if (len === 0) return t;
+          return {
+            ...t,
+            steps: t.steps.map((row) => {
+              const shifted = [...row];
+              if (action.direction === 1) {
+                shifted.unshift(shifted.pop()!);
+              } else {
+                shifted.push(shifted.shift()!);
+              }
+              return shifted;
+            }),
+          };
+        }),
+      };
+
+    case "RANDOMIZE_PATTERN":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          return {
+            ...t,
+            steps: t.steps.map((row) =>
+              row.map(() => ({
+                active: Math.random() < action.density,
+                velocity: Math.round((0.5 + Math.random() * 0.5) * 10) / 10,
+              })),
+            ),
+          };
+        }),
+      };
+
+    case "CLEAR_TRACK":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          return {
+            ...t,
+            steps: t.steps.map((row) =>
+              row.map((s) => ({ ...s, active: false })),
+            ),
+          };
+        }),
+      };
+
+    case "REVERSE_STEPS":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          return {
+            ...t,
+            steps: t.steps.map((row) => [...row].reverse()),
+          };
+        }),
       };
 
     default:
@@ -533,6 +629,13 @@ export function useTracks() {
     [],
   );
 
+  const setModifiers = useCallback(
+    (trackId: string, modifiers: Partial<TrackModifiers>) => {
+      dispatch({ type: "SET_MODIFIERS", trackId, modifiers });
+    },
+    [],
+  );
+
   const setSwing = useCallback((swing: number) => {
     dispatch({ type: "SET_SWING", swing });
   }, []);
@@ -561,6 +664,60 @@ export function useTracks() {
   const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const redo = useCallback(() => dispatch({ type: "REDO" }), []);
 
+  const clipboardRef = useRef<Step[][] | null>(null);
+
+  const copySteps = useCallback(
+    (trackId: string) => {
+      const t = project.tracks.find((t) => t.id === trackId);
+      if (t)
+        clipboardRef.current = t.steps.map((row) => row.map((s) => ({ ...s })));
+    },
+    [project.tracks],
+  );
+
+  const pasteSteps = useCallback(
+    (trackId: string) => {
+      const clip = clipboardRef.current;
+      if (!clip) return;
+      const t = project.tracks.find((t) => t.id === trackId);
+      if (!t) return;
+      // Paste row-by-row, step-by-step up to min dimensions
+      const newSteps = t.steps.map((row, ri) => {
+        if (ri >= clip.length) return row;
+        return row.map((s, ci) =>
+          ci < clip[ri].length ? { ...clip[ri][ci] } : s,
+        );
+      });
+      // Dispatch as IMPORT with modified track (goes through history)
+      dispatch({
+        type: "IMPORT_PROJECT",
+        project: {
+          ...project,
+          tracks: project.tracks.map((tr) =>
+            tr.id === trackId ? { ...tr, steps: newSteps } : tr,
+          ),
+        },
+      });
+    },
+    [project],
+  );
+
+  const shiftPattern = useCallback((trackId: string, direction: 1 | -1) => {
+    dispatch({ type: "SHIFT_PATTERN", trackId, direction });
+  }, []);
+
+  const randomizePattern = useCallback((trackId: string, density: number) => {
+    dispatch({ type: "RANDOMIZE_PATTERN", trackId, density });
+  }, []);
+
+  const clearTrack = useCallback((trackId: string) => {
+    dispatch({ type: "CLEAR_TRACK", trackId });
+  }, []);
+
+  const reverseSteps = useCallback((trackId: string) => {
+    dispatch({ type: "REVERSE_STEPS", trackId });
+  }, []);
+
   return {
     project,
     canUndo,
@@ -586,9 +743,16 @@ export function useTracks() {
     duplicateTrack,
     setVelocity,
     setEffects,
+    setModifiers,
     setSwing,
     insertTrackAfter,
     setLoopLength,
+    copySteps,
+    pasteSteps,
+    shiftPattern,
+    randomizePattern,
+    clearTrack,
+    reverseSteps,
     undo,
     redo,
   };

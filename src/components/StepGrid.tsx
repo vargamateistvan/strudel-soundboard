@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { Track } from "../types";
 
 interface StepGridProps {
@@ -22,8 +22,45 @@ export function StepGrid({
   onSetVelocity,
 }: StepGridProps) {
   const stepCount = track.steps[0]?.length ?? 16;
+  const rowCount = track.rows.length;
   const loopLen = track.loopLength;
   const [painting, setPainting] = useState<boolean | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const focusCell = useCallback((row: number, col: number) => {
+    const cell = gridRef.current?.querySelector(
+      `[data-row="${row}"][data-col="${col}"]`,
+    ) as HTMLElement | null;
+    cell?.focus();
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (row: number, col: number, e: React.KeyboardEvent) => {
+      const { key } = e;
+      let handled = true;
+      if (key === "ArrowRight")
+        focusCell(row, Math.min(col + 1, stepCount - 1));
+      else if (key === "ArrowLeft") focusCell(row, Math.max(col - 1, 0));
+      else if (key === "ArrowDown")
+        focusCell(Math.min(row + 1, rowCount - 1), col);
+      else if (key === "ArrowUp") focusCell(Math.max(row - 1, 0), col);
+      else if (key === "Enter" || key === " ") {
+        e.preventDefault();
+        const current = track.steps[row]?.[col]?.active ?? false;
+        onSetStep(row, col, !current);
+      } else if (key >= "1" && key <= "9") {
+        const step = track.steps[row]?.[col];
+        if (step?.active) {
+          const vel = parseInt(key) / 9;
+          onSetVelocity(row, col, Math.round(vel * 10) / 10);
+        }
+      } else {
+        handled = false;
+      }
+      if (handled) e.stopPropagation();
+    },
+    [stepCount, rowCount, track.steps, onSetStep, onSetVelocity, focusCell],
+  );
 
   const handlePointerDown = useCallback(
     (row: number, col: number, e: React.PointerEvent) => {
@@ -66,6 +103,8 @@ export function StepGrid({
       className="step-grid-container"
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      ref={gridRef}
+      role="grid"
     >
       <div className="step-grid">
         {track.rows.map((rowLabel, rowIdx) => (
@@ -93,6 +132,9 @@ export function StepGrid({
               {track.steps[rowIdx]?.map((step, colIdx) => (
                 <button
                   key={colIdx}
+                  data-row={rowIdx}
+                  data-col={colIdx}
+                  tabIndex={rowIdx === 0 && colIdx === 0 ? 0 : -1}
                   className={[
                     "step-cell",
                     step.active ? "step-active" : "",
@@ -112,6 +154,7 @@ export function StepGrid({
                   }
                   onPointerDown={(e) => handlePointerDown(rowIdx, colIdx, e)}
                   onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
+                  onKeyDown={(e) => handleKeyDown(rowIdx, colIdx, e)}
                   onWheel={(e) => handleWheel(rowIdx, colIdx, e)}
                   title={
                     step.active

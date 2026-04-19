@@ -10,12 +10,14 @@ import { ExportModal } from "./ExportModal";
 import { ImportModal } from "./ImportModal";
 import { SaveLoadModal } from "./SaveLoadModal";
 import { useRecorder } from "../hooks/useRecorder";
+import { useAnalyser } from "../hooks/useAnalyser";
 import "./App.css";
 
 export default function App() {
   const strudel = useStrudel();
   const tracks = useTracks();
   const recorder = useRecorder();
+  const analyser = useAnalyser();
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
@@ -37,8 +39,9 @@ export default function App() {
   const handlePlay = useCallback(() => {
     const code = buildPatternCode(tracks.project);
     if (!code) return;
+    analyser.connect();
     strudel.play(code);
-  }, [strudel, tracks.project]);
+  }, [strudel, tracks.project, analyser]);
 
   const handleStop = useCallback(() => {
     strudel.stop();
@@ -206,9 +209,16 @@ export default function App() {
             onDuplicateTrack={tracks.duplicateTrack}
             onSetVelocity={tracks.setVelocity}
             onSetEffects={tracks.setEffects}
+            onSetModifiers={tracks.setModifiers}
             onAddPresetTracks={tracks.addPresetTracks}
             onInsertTrackAfter={tracks.insertTrackAfter}
             onSetLoopLength={tracks.setLoopLength}
+            onCopySteps={tracks.copySteps}
+            onPasteSteps={tracks.pasteSteps}
+            onShiftPattern={tracks.shiftPattern}
+            onRandomizePattern={tracks.randomizePattern}
+            onClearTrack={tracks.clearTrack}
+            onReverseSteps={tracks.reverseSteps}
           />
         </div>
 
@@ -217,6 +227,7 @@ export default function App() {
             project={tracks.project}
             currentStep={currentStep}
             isPlaying={strudel.isPlaying}
+            analyserRef={analyser.analyser}
           />
           <CodePreview project={tracks.project} />
         </div>

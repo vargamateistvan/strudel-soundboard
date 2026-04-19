@@ -68,6 +68,29 @@ const EFFECT_DEFS: {
     offValue: 0,
     display: (v) => (v === 0 ? "OFF" : `${v}`),
   },
+  {
+    key: "pan",
+    label: "PAN",
+    min: 0,
+    max: 1,
+    step: 0.05,
+    offValue: 0.5,
+    display: (v) =>
+      v < 0.45
+        ? `L${Math.round((0.5 - v) * 200)}`
+        : v > 0.55
+          ? `R${Math.round((v - 0.5) * 200)}`
+          : "C",
+  },
+  {
+    key: "hpf",
+    label: "HPF",
+    min: 20,
+    max: 20000,
+    step: 100,
+    offValue: 20,
+    display: (v) => (v <= 20 ? "OFF" : `${v}Hz`),
+  },
 ];
 
 export function EffectsPanel({ effects, onChange }: EffectsPanelProps) {

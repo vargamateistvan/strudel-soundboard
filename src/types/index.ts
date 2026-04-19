@@ -10,8 +10,10 @@ export interface TrackEffects {
   delaytime: number; // 0-1 (in fractions)
   room: number; // 0-1 (reverb)
   lpf: number; // 20-20000 (hz), 20000 = off
+  hpf: number; // 20-20000 (hz), 20 = off
   distort: number; // 0-1
   crush: number; // 0-16, 0 = off
+  pan: number; // 0-1, 0.5 = center
 }
 
 export const DEFAULT_EFFECTS: TrackEffects = {
@@ -19,8 +21,24 @@ export const DEFAULT_EFFECTS: TrackEffects = {
   delaytime: 0.25,
   room: 0,
   lpf: 20000,
+  hpf: 20,
   distort: 0,
   crush: 0,
+  pan: 0.5,
+};
+
+export interface TrackModifiers {
+  reverse: boolean;
+  speed: number; // 0.25-4, 1 = normal
+  probability: number; // 0-1, 1 = always play
+  every: { n: number; mod: "reverse" | "double" | "half" } | null;
+}
+
+export const DEFAULT_MODIFIERS: TrackModifiers = {
+  reverse: false,
+  speed: 1,
+  probability: 1,
+  every: null,
 };
 
 export interface Track {
@@ -37,6 +55,7 @@ export interface Track {
   solo: boolean;
   volume: number;
   effects: TrackEffects;
+  modifiers?: TrackModifiers;
   loopLength?: number; // if set, pattern loops at this many steps (e.g. 4, 8)
 }
 
