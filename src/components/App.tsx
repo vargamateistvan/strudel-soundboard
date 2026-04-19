@@ -9,11 +9,13 @@ import { Visualizer } from "./Visualizer";
 import { ExportModal } from "./ExportModal";
 import { ImportModal } from "./ImportModal";
 import { SaveLoadModal } from "./SaveLoadModal";
+import { useRecorder } from "../hooks/useRecorder";
 import "./App.css";
 
 export default function App() {
   const strudel = useStrudel();
   const tracks = useTracks();
+  const recorder = useRecorder();
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
@@ -41,7 +43,19 @@ export default function App() {
   const handleStop = useCallback(() => {
     strudel.stop();
     setCurrentStep(-1);
-  }, [strudel]);
+    if (recorder.isRecording) recorder.stopRecording();
+  }, [strudel, recorder]);
+
+  const handleRecord = useCallback(async () => {
+    await recorder.startRecording();
+    // Re-evaluate pattern so the new audio graph routes through the recorder
+    const code = buildPatternCode(tracks.project);
+    if (code) strudel.play(code);
+  }, [recorder, strudel, tracks.project]);
+
+  const handleStopRecording = useCallback(() => {
+    recorder.stopRecording();
+  }, [recorder]);
 
   const handlePreviewRow = useCallback(
     (
@@ -137,10 +151,13 @@ export default function App() {
         stepCount={tracks.project.stepCount}
         swing={tracks.project.swing ?? 0}
         isPlaying={strudel.isPlaying}
+        isRecording={recorder.isRecording}
         canUndo={tracks.canUndo}
         canRedo={tracks.canRedo}
         onPlay={handlePlay}
         onStop={handleStop}
+        onRecord={handleRecord}
+        onStopRecording={handleStopRecording}
         onBpmChange={tracks.setBpm}
         onStepCountChange={tracks.setStepCount}
         onSwingChange={tracks.setSwing}

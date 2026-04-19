@@ -334,6 +334,34 @@ body::after {
   box-shadow: 0 0 20px rgba(255, 23, 68, 0.6), inset 0 0 15px rgba(255, 23, 68, 0.15);
 }
 
+.record-btn {
+  color: var(--text-muted);
+  border-color: var(--text-muted);
+  box-shadow: none;
+  text-shadow: none;
+  font-size: 0.9rem;
+}
+
+.record-btn:hover {
+  color: #ff1744;
+  border-color: #ff1744;
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
+  text-shadow: 0 0 10px #ff1744;
+}
+
+.record-btn.recording {
+  color: #ff1744;
+  border-color: #ff1744;
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.4), inset 0 0 10px rgba(255, 23, 68, 0.1);
+  text-shadow: 0 0 10px #ff1744;
+  animation: record-pulse 1s ease-in-out infinite;
+}
+
+@keyframes record-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 23, 68, 0.4), inset 0 0 10px rgba(255, 23, 68, 0.1); }
+  50% { box-shadow: 0 0 20px rgba(255, 23, 68, 0.8), inset 0 0 20px rgba(255, 23, 68, 0.2); }
+}
+
 .action-btn {
   background: var(--bg-primary);
   color: var(--neon-pink);

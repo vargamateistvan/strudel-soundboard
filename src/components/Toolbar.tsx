@@ -5,10 +5,13 @@ interface ToolbarProps {
   stepCount: number;
   swing: number;
   isPlaying: boolean;
+  isRecording: boolean;
   canUndo: boolean;
   canRedo: boolean;
   onPlay: () => void;
   onStop: () => void;
+  onRecord: () => void;
+  onStopRecording: () => void;
   onBpmChange: (bpm: number) => void;
   onStepCountChange: (count: number) => void;
   onSwingChange: (swing: number) => void;
@@ -28,10 +31,13 @@ export function Toolbar({
   stepCount,
   swing,
   isPlaying,
+  isRecording,
   canUndo,
   canRedo,
   onPlay,
   onStop,
+  onRecord,
+  onStopRecording,
   onBpmChange,
   onStepCountChange,
   onSwingChange,
@@ -54,6 +60,13 @@ export function Toolbar({
           title={isPlaying ? "Stop (Space)" : "Play (Space)"}
         >
           {isPlaying ? "⏹" : "▶"}
+        </button>
+        <button
+          className={`toolbar-btn transport-btn record-btn ${isRecording ? "recording" : ""}`}
+          onClick={isRecording ? onStopRecording : onRecord}
+          title={isRecording ? "Stop Recording" : "Record"}
+        >
+          {isRecording ? "⏺" : "⏺"}
         </button>
       </div>
 
