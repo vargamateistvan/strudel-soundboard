@@ -1,4 +1,9 @@
 import { useRef, useCallback, useEffect } from "react";
+import {
+  installAudioTap,
+  addTapTarget,
+  removeTapTarget,
+} from "../lib/audioTap";
 
 export function useAnalyser() {
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -14,29 +19,9 @@ export function useAnalyser() {
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.8;
 
-    // Tap into audio output: connect destination's stream back through the analyser
-    // We use the same monkey-patch approach: insert analyser before destination
-    // Simpler: create a MediaStreamDestination, connect analyser inline
-    // Actually, creating a gain node as a tap is safest:
-    const tap = ctx.createGain();
-    tap.gain.value = 1;
+    installAudioTap(ctx);
+    addTapTarget(analyser);
 
-    // Monkey-patch to intercept connections to ctx.destination
-    const origConnect = AudioNode.prototype.connect;
-    const mainDest = ctx.destination;
-    AudioNode.prototype.connect = function (...args: unknown[]) {
-      const result = (origConnect as Function).apply(this, args);
-      if (args[0] === mainDest) {
-        try {
-          (origConnect as Function).call(this, analyser);
-        } catch {
-          // ignore duplicate connections
-        }
-      }
-      return result;
-    } as typeof AudioNode.prototype.connect;
-
-    // Store cleanup
     analyserRef.current = analyser;
     connectedRef.current = true;
     return analyser;
@@ -44,6 +29,9 @@ export function useAnalyser() {
 
   useEffect(() => {
     return () => {
+      if (analyserRef.current) {
+        removeTapTarget(analyserRef.current);
+      }
       analyserRef.current = null;
       connectedRef.current = false;
     };

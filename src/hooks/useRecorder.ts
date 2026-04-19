@@ -1,8 +1,11 @@
 import { useState, useRef, useCallback } from "react";
 // @ts-expect-error — lamejs uses commonjs exports
 import lamejs from "lamejs";
-
-let origConnect: typeof AudioNode.prototype.connect | null = null;
+import {
+  installAudioTap,
+  addTapTarget,
+  removeTapTarget,
+} from "../lib/audioTap";
 
 function floatTo16Bit(f: number): number {
   const v = Math.max(-1, Math.min(1, f));
@@ -48,23 +51,9 @@ export function useRecorder() {
     processor.connect(streamCtx.destination);
     scriptRef.current = processor;
 
-    // Monkey-patch connect so any node connected to ctx.destination also feeds our capture dest
-    if (!origConnect) {
-      origConnect = AudioNode.prototype.connect;
-      const mainDest = ctx.destination;
-      const captureDest = dest;
-      AudioNode.prototype.connect = function (...args: unknown[]) {
-        const result = (origConnect as Function).apply(this, args);
-        if (args[0] === mainDest) {
-          try {
-            (origConnect as Function).call(this, captureDest);
-          } catch {
-            // ignore
-          }
-        }
-        return result;
-      } as typeof AudioNode.prototype.connect;
-    }
+    // Register the capture destination as a tap target
+    installAudioTap(ctx);
+    addTapTarget(dest);
 
     setIsRecording(true);
   }, []);
@@ -83,12 +72,12 @@ export function useRecorder() {
       }
       scriptRef.current = null;
     }
+    const dest = destRef.current;
     destRef.current = null;
 
-    // Restore original connect
-    if (origConnect) {
-      AudioNode.prototype.connect = origConnect;
-      origConnect = null;
+    // Remove the capture destination from the shared audio tap
+    if (dest) {
+      removeTapTarget(dest);
     }
 
     // Merge all captured chunks

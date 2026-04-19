@@ -36,10 +36,10 @@ export default function App() {
     localStorage.setItem("strudel-sb-theme", theme);
   }, [theme]);
 
-  const handlePlay = useCallback(() => {
+  const handlePlay = useCallback(async () => {
     const code = buildPatternCode(tracks.project);
     if (!code) return;
-    analyser.connect();
+    await analyser.connect();
     strudel.play(code);
   }, [strudel, tracks.project, analyser]);
 
@@ -115,6 +115,11 @@ export default function App() {
       // Skip when typing in inputs
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // When focused inside a step grid, only allow meta/ctrl shortcuts (undo/redo/save)
+      if ((e.target as HTMLElement)?.closest('[role="grid"]')) {
+        if (!e.metaKey && !e.ctrlKey) return;
+      }
 
       if (e.code === "Space") {
         e.preventDefault();

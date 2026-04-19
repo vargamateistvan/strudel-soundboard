@@ -117,6 +117,7 @@ type Action =
   | { type: "RANDOMIZE_PATTERN"; trackId: string; density: number }
   | { type: "CLEAR_TRACK"; trackId: string }
   | { type: "REVERSE_STEPS"; trackId: string }
+  | { type: "PASTE_STEPS"; trackId: string; steps: Step[][] }
   | { type: "UNDO" }
   | { type: "REDO" };
 
@@ -454,6 +455,23 @@ function reducer(state: Project, action: Action): Project {
         }),
       };
 
+    case "PASTE_STEPS":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          return {
+            ...t,
+            steps: t.steps.map((row, ri) => {
+              if (ri >= action.steps.length) return row;
+              return row.map((s, ci) =>
+                ci < action.steps[ri].length ? { ...action.steps[ri][ci] } : s,
+              );
+            }),
+          };
+        }),
+      };
+
     default:
       return state;
   }
@@ -681,25 +699,9 @@ export function useTracks() {
       if (!clip) return;
       const t = project.tracks.find((t) => t.id === trackId);
       if (!t) return;
-      // Paste row-by-row, step-by-step up to min dimensions
-      const newSteps = t.steps.map((row, ri) => {
-        if (ri >= clip.length) return row;
-        return row.map((s, ci) =>
-          ci < clip[ri].length ? { ...clip[ri][ci] } : s,
-        );
-      });
-      // Dispatch as IMPORT with modified track (goes through history)
-      dispatch({
-        type: "IMPORT_PROJECT",
-        project: {
-          ...project,
-          tracks: project.tracks.map((tr) =>
-            tr.id === trackId ? { ...tr, steps: newSteps } : tr,
-          ),
-        },
-      });
+      dispatch({ type: "PASTE_STEPS", trackId, steps: clip });
     },
-    [project],
+    [project.tracks],
   );
 
   const shiftPattern = useCallback((trackId: string, direction: 1 | -1) => {
