@@ -43,6 +43,7 @@ function buildTrackPattern(track: Track): string | null {
   if (track.type === "drums") {
     pattern = buildDrumPattern(track);
   } else {
+    // Both "melodic" and "piano" use note-based patterns
     pattern = buildMelodicPattern(track);
   }
   if (pattern && track.modifiers) {

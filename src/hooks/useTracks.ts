@@ -12,6 +12,7 @@ import {
   DEFAULT_STEP_COUNT,
   DEFAULT_DRUM_ROWS,
   MELODIC_NOTES,
+  PIANO_SOUNDS,
 } from "../lib/constants";
 import { autoSave, autoLoad } from "../lib/projectSerializer";
 
@@ -68,8 +69,25 @@ function createMelodicTrack(stepCount: number): Track {
   };
 }
 
+function createPianoTrack(stepCount: number): Track {
+  const rows = [...MELODIC_NOTES];
+  return {
+    id: `track-${nextId++}`,
+    name: `Piano ${nextId - 1}`,
+    type: "piano",
+    sound: PIANO_SOUNDS[0],
+    bank: "",
+    steps: createEmptySteps(rows.length, stepCount),
+    rows,
+    muted: false,
+    solo: false,
+    volume: 1,
+    effects: { ...DEFAULT_EFFECTS },
+  };
+}
+
 type Action =
-  | { type: "ADD_TRACK"; trackType: "drums" | "melodic" }
+  | { type: "ADD_TRACK"; trackType: "drums" | "melodic" | "piano" }
   | { type: "REMOVE_TRACK"; trackId: string }
   | { type: "TOGGLE_STEP"; trackId: string; row: number; col: number }
   | {
@@ -110,7 +128,7 @@ type Action =
   | {
       type: "INSERT_TRACK_AFTER";
       afterTrackId: string;
-      trackType: "drums" | "melodic";
+      trackType: "drums" | "melodic" | "piano";
     }
   | { type: "SET_LOOP_LENGTH"; trackId: string; loopLength: number | undefined }
   | { type: "SHIFT_PATTERN"; trackId: string; direction: 1 | -1 }
@@ -127,7 +145,9 @@ function reducer(state: Project, action: Action): Project {
       const track =
         action.trackType === "drums"
           ? createDrumTrack(state.stepCount)
-          : createMelodicTrack(state.stepCount);
+          : action.trackType === "piano"
+            ? createPianoTrack(state.stepCount)
+            : createMelodicTrack(state.stepCount);
       return { ...state, tracks: [...state.tracks, track] };
     }
 
@@ -371,7 +391,9 @@ function reducer(state: Project, action: Action): Project {
       const newTrack =
         action.trackType === "drums"
           ? createDrumTrack(state.stepCount)
-          : createMelodicTrack(state.stepCount);
+          : action.trackType === "piano"
+            ? createPianoTrack(state.stepCount)
+            : createMelodicTrack(state.stepCount);
       const afterIdx = state.tracks.findIndex(
         (t) => t.id === action.afterTrackId,
       );
@@ -555,7 +577,7 @@ export function useTracks() {
     autoSave(project);
   }, [project]);
 
-  const addTrack = useCallback((trackType: "drums" | "melodic") => {
+  const addTrack = useCallback((trackType: "drums" | "melodic" | "piano") => {
     dispatch({ type: "ADD_TRACK", trackType });
   }, []);
 
@@ -659,7 +681,7 @@ export function useTracks() {
   }, []);
 
   const insertTrackAfter = useCallback(
-    (afterTrackId: string, trackType: "drums" | "melodic") => {
+    (afterTrackId: string, trackType: "drums" | "melodic" | "piano") => {
       dispatch({ type: "INSERT_TRACK_AFTER", afterTrackId, trackType });
     },
     [],

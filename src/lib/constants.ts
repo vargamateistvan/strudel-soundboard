@@ -23,6 +23,14 @@ export const DEFAULT_DRUM_ROWS = ["bd", "sd", "hh", "oh", "cp"];
 
 export const SYNTH_SOUNDS = ["sine", "sawtooth", "square", "triangle"] as const;
 
+export const PIANO_SOUNDS = [
+  "piano",
+  "harp",
+  "marimba",
+  "glockenspiel",
+  "kalimba",
+] as const;
+
 export const BANKS = [
   "", // default (no bank)
   "RolandTR808",

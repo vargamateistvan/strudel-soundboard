@@ -1,7 +1,12 @@
 import { useState } from "react";
 import type { Track, TrackEffects, TrackModifiers } from "../types";
 import { DEFAULT_MODIFIERS } from "../types";
-import { DRUM_SOUNDS, SYNTH_SOUNDS, BANKS } from "../lib/constants";
+import {
+  DRUM_SOUNDS,
+  SYNTH_SOUNDS,
+  PIANO_SOUNDS,
+  BANKS,
+} from "../lib/constants";
 import { EffectsPanel } from "./EffectsPanel";
 import { ModifiersPanel } from "./ModifiersPanel";
 
@@ -90,6 +95,20 @@ export function TrackHeader({
             onChange={(e) => onSetSound(e.target.value)}
           >
             {SYNTH_SOUNDS.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {track.type === "piano" && (
+          <select
+            className="track-select"
+            value={track.sound}
+            onChange={(e) => onSetSound(e.target.value)}
+          >
+            {PIANO_SOUNDS.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
