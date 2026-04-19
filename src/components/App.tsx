@@ -5,6 +5,7 @@ import { buildPatternCode } from "../lib/patternBuilder";
 import { Toolbar } from "./Toolbar";
 import { TrackList } from "./TrackList";
 import { CodePreview } from "./CodePreview";
+import { Visualizer } from "./Visualizer";
 import { ExportModal } from "./ExportModal";
 import { ImportModal } from "./ImportModal";
 import { SaveLoadModal } from "./SaveLoadModal";
@@ -185,6 +186,11 @@ export default function App() {
         </div>
 
         <div className="app-preview">
+          <Visualizer
+            project={tracks.project}
+            currentStep={currentStep}
+            isPlaying={strudel.isPlaying}
+          />
           <CodePreview project={tracks.project} />
         </div>
       </div>
