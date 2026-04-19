@@ -63,18 +63,18 @@ export const MELODIC_NOTES = [
 ] as const;
 
 export const TRACK_COLORS = [
-  "#4fc3f7",
-  "#81c784",
-  "#ffb74d",
-  "#e57373",
-  "#ba68c8",
-  "#4dd0e1",
-  "#aed581",
-  "#ff8a65",
-  "#f06292",
-  "#7986cb",
-  "#dce775",
-  "#a1887f",
+  "#ff2de2",
+  "#00fff7",
+  "#ffe600",
+  "#ff1744",
+  "#bf00ff",
+  "#39ff14",
+  "#ff6b00",
+  "#00b8ff",
+  "#ff4081",
+  "#7c4dff",
+  "#e040fb",
+  "#18ffff",
 ];
 
 export function getTrackColor(index: number): string {

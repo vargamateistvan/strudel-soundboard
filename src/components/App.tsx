@@ -73,10 +73,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <h1 className="app-title">🎵 Strudel Soundboard</h1>
-      </header>
-
       <Toolbar
         bpm={tracks.project.bpm}
         stepCount={tracks.project.stepCount}
