@@ -22,27 +22,14 @@ async function ensureStrudel() {
 export function useStrudel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ready, setReady] = useState(false);
-  const initedRef = useRef(false);
   const currentCodeRef = useRef<string | null>(null);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (initedRef.current) return;
-    initedRef.current = true;
-    // Start init on first user interaction (AudioContext needs gesture)
-    const initOnGesture = () => {
-      ensureStrudel()
-        .then(() => setReady(true))
-        .catch((err) => console.error("Failed to initialize Strudel:", err));
-      window.removeEventListener("click", initOnGesture);
-      window.removeEventListener("keydown", initOnGesture);
-    };
-    window.addEventListener("click", initOnGesture);
-    window.addEventListener("keydown", initOnGesture);
-    return () => {
-      window.removeEventListener("click", initOnGesture);
-      window.removeEventListener("keydown", initOnGesture);
-    };
+    // Initialize eagerly — AudioContext will auto-resume on first interaction
+    ensureStrudel()
+      .then(() => setReady(true))
+      .catch((err) => console.error("Failed to initialize Strudel:", err));
   }, []);
 
   const play = useCallback(async (code: string) => {

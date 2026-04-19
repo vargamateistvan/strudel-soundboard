@@ -7,6 +7,7 @@ import { TrackList } from "./TrackList";
 import { CodePreview } from "./CodePreview";
 import { ExportModal } from "./ExportModal";
 import { ImportModal } from "./ImportModal";
+import { SaveLoadModal } from "./SaveLoadModal";
 import "./App.css";
 
 export default function App() {
@@ -14,7 +15,21 @@ export default function App() {
   const tracks = useTracks();
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("strudel-sb-theme") || "synthwave",
+  );
+
+  // Apply theme to document root
+  useEffect(() => {
+    if (theme === "synthwave") {
+      document.documentElement.removeAttribute("data-theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    localStorage.setItem("strudel-sb-theme", theme);
+  }, [theme]);
 
   const handlePlay = useCallback(() => {
     const code = buildPatternCode(tracks.project);
@@ -76,31 +91,66 @@ export default function App() {
     return () => clearInterval(interval);
   }, [strudel.isPlaying, tracks.project.bpm, tracks.project.stepCount]);
 
-  // Keyboard shortcut: Space = play/stop
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.code === "Space" && e.target === document.body) {
+      // Skip when typing in inputs
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.code === "Space") {
         e.preventDefault();
         if (strudel.isPlaying) handleStop();
         else handlePlay();
+      } else if (e.key === "z" && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        tracks.redo();
+      } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        tracks.undo();
+      } else if (e.key === "s" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setShowSaveLoad(true);
+      } else if (e.key >= "1" && e.key <= "9" && !e.metaKey && !e.ctrlKey) {
+        // Number keys: mute/unmute track
+        const idx = parseInt(e.key) - 1;
+        const t = tracks.project.tracks[idx];
+        if (t) tracks.toggleMute(t.id);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [strudel.isPlaying, handlePlay, handleStop]);
+  }, [strudel.isPlaying, handlePlay, handleStop, tracks]);
 
   return (
     <div className="app">
+      {!strudel.ready && (
+        <div className="loading-indicator">
+          <div className="loading-spinner" />
+          <span>Loading audio engine…</span>
+        </div>
+      )}
+
       <Toolbar
         bpm={tracks.project.bpm}
         stepCount={tracks.project.stepCount}
+        swing={tracks.project.swing ?? 0}
         isPlaying={strudel.isPlaying}
+        canUndo={tracks.canUndo}
+        canRedo={tracks.canRedo}
         onPlay={handlePlay}
         onStop={handleStop}
         onBpmChange={tracks.setBpm}
         onStepCountChange={tracks.setStepCount}
+        onSwingChange={tracks.setSwing}
         onExport={() => setShowExport(true)}
         onImport={() => setShowImport(true)}
+        onSaveLoad={() => setShowSaveLoad(true)}
+        onUndo={tracks.undo}
+        onRedo={tracks.redo}
+        onLoadPreset={tracks.importProject}
+        theme={theme}
+        onThemeChange={setTheme}
       />
 
       <div className="app-main">
@@ -111,6 +161,7 @@ export default function App() {
             onAddTrack={tracks.addTrack}
             onRemoveTrack={tracks.removeTrack}
             onToggleStep={tracks.toggleStep}
+            onSetStep={tracks.setStep}
             onSetSound={tracks.setSound}
             onSetBank={tracks.setBank}
             onToggleMute={tracks.toggleMute}
@@ -125,6 +176,10 @@ export default function App() {
                 rowLabel,
               )
             }
+            onReorderTracks={tracks.reorderTracks}
+            onDuplicateTrack={tracks.duplicateTrack}
+            onSetVelocity={tracks.setVelocity}
+            onSetEffects={tracks.setEffects}
           />
         </div>
 
@@ -144,6 +199,14 @@ export default function App() {
         <ImportModal
           onImport={tracks.importProject}
           onClose={() => setShowImport(false)}
+        />
+      )}
+
+      {showSaveLoad && (
+        <SaveLoadModal
+          project={tracks.project}
+          onLoad={tracks.importProject}
+          onClose={() => setShowSaveLoad(false)}
         />
       )}
     </div>

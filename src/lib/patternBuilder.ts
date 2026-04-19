@@ -1,4 +1,5 @@
-import type { Project, Track } from "../types";
+import type { Project, Track, TrackEffects } from "../types";
+import { DEFAULT_EFFECTS } from "../types";
 
 /**
  * Converts the project state into a Strudel code string for live playback.
@@ -25,6 +26,15 @@ export function buildPatternCode(project: Project): string {
   } else {
     lines.push(`stack(\n  ${patterns.join(",\n  ")}\n)`);
   }
+
+  // Apply swing
+  const swing = project.swing ?? 0;
+  if (swing > 0) {
+    // Wrap in .swing(amount)
+    const last = lines.length - 1;
+    lines[last] = lines[last] + `.swing(${swing.toFixed(2)})`;
+  }
+
   return lines.join("\n");
 }
 
@@ -46,7 +56,13 @@ function buildDrumPattern(track: Track): string | null {
 
     const drumName = track.rows[rowIdx];
     const stepStrs = row.map((s) => (s.active ? drumName : "~"));
-    rowPatterns.push(`s("${stepStrs.join(" ")}")`);
+    const hasVelocity = row.some((s) => s.active && s.velocity !== 1);
+    let rp = `s("${stepStrs.join(" ")}")`;
+    if (hasVelocity) {
+      const velStrs = row.map((s) => (s.active ? s.velocity.toFixed(1) : "1"));
+      rp += `.velocity("${velStrs.join(" ")}")`;
+    }
+    rowPatterns.push(rp);
   }
 
   if (rowPatterns.length === 0) return null;
@@ -64,6 +80,7 @@ function buildDrumPattern(track: Track): string | null {
   if (track.volume !== 1) {
     pattern += `.gain(${track.volume.toFixed(2)})`;
   }
+  pattern += buildEffectsChain(track.effects);
   return pattern;
 }
 
@@ -90,8 +107,49 @@ function buildMelodicPattern(track: Track): string | null {
   if (stepNotes.every((n) => n === "~")) return null;
 
   let pattern = `note("${stepNotes.join(" ")}").s("${track.sound}")`;
+
+  // Per-step velocity
+  const stepVels: number[] = [];
+  for (let col = 0; col < stepCount; col++) {
+    let vel = 1;
+    for (let rowIdx = 0; rowIdx < track.rows.length; rowIdx++) {
+      const step = track.steps[rowIdx]?.[col];
+      if (step?.active && step.velocity !== 1) {
+        vel = step.velocity;
+        break;
+      }
+    }
+    stepVels.push(vel);
+  }
+  if (stepVels.some((v) => v !== 1)) {
+    pattern += `.velocity("${stepVels.map((v) => v.toFixed(1)).join(" ")}")`;
+  }
+
   if (track.volume !== 1) {
     pattern += `.gain(${track.volume.toFixed(2)})`;
   }
+  pattern += buildEffectsChain(track.effects);
   return pattern;
+}
+
+function buildEffectsChain(fx: TrackEffects | undefined): string {
+  if (!fx) return "";
+  const d = DEFAULT_EFFECTS;
+  let chain = "";
+  if (fx.delay > 0) {
+    chain += `.delay(${fx.delay.toFixed(2)}).delaytime(${fx.delaytime.toFixed(2)})`;
+  }
+  if (fx.room > 0) {
+    chain += `.room(${fx.room.toFixed(2)})`;
+  }
+  if (fx.lpf < d.lpf) {
+    chain += `.lpf(${Math.round(fx.lpf)})`;
+  }
+  if (fx.distort > 0) {
+    chain += `.distort(${fx.distort.toFixed(2)})`;
+  }
+  if (fx.crush > 0) {
+    chain += `.crush(${fx.crush})`;
+  }
+  return chain;
 }

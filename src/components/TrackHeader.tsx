@@ -1,5 +1,7 @@
-import type { Track } from "../types";
+import { useState } from "react";
+import type { Track, TrackEffects } from "../types";
 import { DRUM_SOUNDS, SYNTH_SOUNDS, BANKS } from "../lib/constants";
+import { EffectsPanel } from "./EffectsPanel";
 
 interface TrackHeaderProps {
   track: Track;
@@ -9,8 +11,10 @@ interface TrackHeaderProps {
   onToggleSolo: () => void;
   onSetVolume: (volume: number) => void;
   onRemove: () => void;
+  onDuplicate: () => void;
   onSetName: (name: string) => void;
   onAddDrumRow: (sound: string) => void;
+  onSetEffects: (effects: Partial<TrackEffects>) => void;
 }
 
 export function TrackHeader({
@@ -21,9 +25,12 @@ export function TrackHeader({
   onToggleSolo,
   onSetVolume,
   onRemove,
+  onDuplicate,
   onSetName,
   onAddDrumRow,
+  onSetEffects,
 }: TrackHeaderProps) {
+  const [showFx, setShowFx] = useState(false);
   const availableDrums = DRUM_SOUNDS.filter((d) => !track.rows.includes(d));
 
   return (
@@ -35,13 +42,22 @@ export function TrackHeader({
           onChange={(e) => onSetName(e.target.value)}
           spellCheck={false}
         />
-        <button
-          className="track-remove-btn"
-          onClick={onRemove}
-          title="Remove track"
-        >
-          ✕
-        </button>
+        <div className="track-header-actions">
+          <button
+            className="track-dup-btn"
+            onClick={onDuplicate}
+            title="Duplicate track"
+          >
+            ⧉
+          </button>
+          <button
+            className="track-remove-btn"
+            onClick={onRemove}
+            title="Remove track"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="track-controls">
@@ -117,7 +133,18 @@ export function TrackHeader({
           onChange={(e) => onSetVolume(Number(e.target.value))}
           title={`Volume: ${Math.round(track.volume * 100)}%`}
         />
+        <button
+          className={`toggle-btn fx-btn ${showFx ? "active" : ""}`}
+          onClick={() => setShowFx(!showFx)}
+          title="Effects"
+        >
+          FX
+        </button>
       </div>
+
+      {showFx && (
+        <EffectsPanel effects={track.effects} onChange={onSetEffects} />
+      )}
     </div>
   );
 }

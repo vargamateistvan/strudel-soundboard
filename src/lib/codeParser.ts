@@ -1,4 +1,5 @@
 import type { Track, Step, ParseResult } from "../types";
+import { DEFAULT_EFFECTS } from "../types";
 import {
   DEFAULT_BPM,
   DEFAULT_STEP_COUNT,
@@ -54,7 +55,7 @@ export function fromMiniNotation(code: string): ParseResult {
   }
 
   return {
-    project: { bpm, stepCount: DEFAULT_STEP_COUNT, tracks },
+    project: { bpm, stepCount: DEFAULT_STEP_COUNT, tracks, swing: 0 },
     warnings,
   };
 }
@@ -176,6 +177,7 @@ function parseDrumTrack(pattern: string, innerPattern: string): Track {
     muted: false,
     solo: false,
     volume,
+    effects: { ...DEFAULT_EFFECTS },
   };
 }
 
@@ -227,6 +229,7 @@ function parseMelodicTrack(pattern: string, notePattern: string): Track {
     muted: false,
     solo: false,
     volume,
+    effects: { ...DEFAULT_EFFECTS },
   };
 }
 
