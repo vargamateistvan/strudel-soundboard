@@ -1173,6 +1173,13 @@ select.add-track-btn option {
     flex: 1;
   }
 
+  /* -- Tracks container: scrollable -- */
+  .app-tracks {
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* -- Tracks: stack header above grid -- */
   .track {
     flex-direction: column;
@@ -1218,15 +1225,33 @@ select.add-track-btn option {
   }
 
   .track-toggles {
-    gap: 4px;
+    gap: 3px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .toggle-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 0.35rem;
   }
 
   .volume-slider {
-    width: 60px;
+    width: 50px;
     flex: 0;
   }
 
+  .loop-select {
+    font-size: 0.32rem;
+    padding: 2px 14px 2px 3px;
+  }
+
   /* -- Step grid: smaller cells -- */
+  .step-grid-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .step-cell {
     width: 26px;
     min-width: 26px;
@@ -1251,6 +1276,31 @@ select.add-track-btn option {
 
   .step-grid-container {
     padding: 4px;
+  }
+
+  /* -- Effects/modifiers/tools panels: mobile-friendly -- */
+  .effects-panel,
+  .modifiers-panel {
+    gap: 6px;
+    padding: 6px 0;
+  }
+
+  .effect-knob {
+    min-width: 44px;
+  }
+
+  .effect-slider {
+    width: 40px;
+  }
+
+  .pattern-tools {
+    gap: 3px;
+    padding: 6px 0;
+  }
+
+  .pattern-tool-btn {
+    font-size: 0.28rem;
+    padding: 4px 6px;
   }
 
   /* -- Add track buttons -- */
@@ -1278,11 +1328,26 @@ select.add-track-btn option {
   .code-preview {
     max-height: 300px;
   }
+
+  /* -- Visualizer -- */
+  .visualizer-modes {
+    top: 2px;
+    right: 2px;
+  }
+
+  .viz-mode-btn {
+    font-size: 0.6rem;
+    padding: 2px 5px;
+  }
 }
 
 @media (max-width: 480px) {
   .app {
     padding: 4px;
+  }
+
+  .app-tracks {
+    max-height: 65vh;
   }
 
   /* -- Toolbar: tighter -- */
@@ -1317,9 +1382,38 @@ select.add-track-btn option {
   }
 
   /* -- Tracks -- */
+  .track-header {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
   .track-name-input {
     width: 60px;
     font-size: 0.4rem;
+  }
+
+  .track-controls {
+    gap: 4px;
+  }
+
+  .track-select {
+    min-width: 50px;
+    font-size: 0.38rem;
+    padding: 2px 16px 2px 4px;
+  }
+
+  .track-toggles {
+    gap: 2px;
+  }
+
+  .toggle-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 0.32rem;
+  }
+
+  .volume-slider {
+    width: 40px;
   }
 
   /* -- Step grid: even smaller cells -- */
@@ -1354,6 +1448,45 @@ select.add-track-btn option {
     gap: 1px;
   }
 
+  /* -- Panels: compact -- */
+  .effects-panel,
+  .modifiers-panel {
+    gap: 4px;
+    padding: 4px 0;
+  }
+
+  .effect-knob {
+    min-width: 38px;
+  }
+
+  .effect-slider {
+    width: 34px;
+  }
+
+  .effect-label {
+    font-size: 0.28rem;
+  }
+
+  .effect-value {
+    font-size: 0.25rem;
+  }
+
+  .pattern-tools {
+    gap: 2px;
+    padding: 4px 0;
+  }
+
+  .pattern-tool-btn {
+    font-size: 0.26rem;
+    padding: 3px 5px;
+  }
+
+  .mod-toggle,
+  .mod-select {
+    font-size: 0.28rem;
+    padding: 2px 6px;
+  }
+
   /* -- Empty state -- */
   .empty-state {
     padding: 30px 12px;
@@ -1361,8 +1494,8 @@ select.add-track-btn option {
   }
 }
 
-/* Touch devices: larger hit targets */
-@media (pointer: coarse) {
+/* Touch devices: larger hit targets — only when screen is wide enough */
+@media (pointer: coarse) and (min-width: 769px) {
   .step-cell {
     width: 36px;
     min-width: 36px;
@@ -1393,6 +1526,39 @@ select.add-track-btn option {
   .toolbar-btn {
     min-height: 36px;
     padding: 6px 12px;
+  }
+}
+
+/* Touch devices on mobile: ensure touch-friendly hit targets without conflicting sizes */
+@media (pointer: coarse) and (max-width: 768px) {
+  .step-cell {
+    height: 28px;
+  }
+
+  .toggle-btn {
+    min-width: 28px;
+    min-height: 28px;
+  }
+
+  .row-preview-btn {
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+  }
+
+  .row-remove-btn {
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+  }
+
+  .toolbar-btn {
+    min-height: 32px;
+  }
+
+  /* Always show insert-after on touch since there's no hover */
+  .insert-after-bar {
+    opacity: 1;
   }
 }
 

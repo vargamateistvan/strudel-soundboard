@@ -41,14 +41,13 @@ export function useStrudel() {
         await ensureStrudel();
         setReady(true);
       }
-      // Resume AudioContext synchronously in the user-gesture frame
+      // Resume AudioContext — MUST be awaited during user gesture for mobile browsers
       if (getAudioContextFn) {
         const ctx = getAudioContextFn() as AudioContext;
         if (ctx.state === "suspended") {
-          ctx.resume();
+          await ctx.resume();
         }
       }
-      // Set playing state eagerly so UI responds immediately
       currentCodeRef.current = code;
       setIsPlaying(true);
       evaluateFn!(code).catch((err: unknown) =>
@@ -73,6 +72,13 @@ export function useStrudel() {
     try {
       await ensureStrudel();
       setReady(true);
+      // Resume AudioContext for mobile
+      if (getAudioContextFn) {
+        const ctx = getAudioContextFn() as AudioContext;
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
+      }
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
       const wasPlaying = currentCodeRef.current;
       await evaluateFn!(code);

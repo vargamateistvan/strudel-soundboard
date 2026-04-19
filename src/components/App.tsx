@@ -43,6 +43,30 @@ export default function App() {
     }
   }, [strudel.ready, analyser]);
 
+  // Resume AudioContext on first user interaction (mobile browsers require this)
+  useEffect(() => {
+    const resume = async () => {
+      try {
+        // @ts-expect-error — getAudioContext is exported but not typed
+        const { getAudioContext } = await import("@strudel/web");
+        const ctx = getAudioContext() as AudioContext;
+        if (ctx?.state === "suspended") {
+          await ctx.resume();
+        }
+      } catch {
+        // Strudel not ready yet — that's fine, play() will handle it
+      }
+      window.removeEventListener("touchstart", resume);
+      window.removeEventListener("click", resume);
+    };
+    window.addEventListener("touchstart", resume, { once: true });
+    window.addEventListener("click", resume, { once: true });
+    return () => {
+      window.removeEventListener("touchstart", resume);
+      window.removeEventListener("click", resume);
+    };
+  }, []);
+
   const handlePlay = useCallback(() => {
     const code = buildPatternCode(tracks.project);
     if (!code) return;
