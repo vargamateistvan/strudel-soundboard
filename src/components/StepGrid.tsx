@@ -6,6 +6,7 @@ interface StepGridProps {
   currentStep: number;
   onToggleStep: (row: number, col: number) => void;
   onRemoveDrumRow: (rowIndex: number) => void;
+  onPreviewRow: (rowLabel: string) => void;
 }
 
 export function StepGrid({
@@ -14,6 +15,7 @@ export function StepGrid({
   currentStep,
   onToggleStep,
   onRemoveDrumRow,
+  onPreviewRow,
 }: StepGridProps) {
   const stepCount = track.steps[0]?.length ?? 16;
 
@@ -23,6 +25,13 @@ export function StepGrid({
         {track.rows.map((rowLabel, rowIdx) => (
           <div key={rowLabel} className="step-row">
             <div className="row-label">
+              <button
+                className="row-preview-btn"
+                onClick={() => onPreviewRow(rowLabel)}
+                title={`Preview ${rowLabel}`}
+              >
+                ▶
+              </button>
               <span className="row-label-text">{rowLabel}</span>
               {track.type === "drums" && track.rows.length > 1 && (
                 <button

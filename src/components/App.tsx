@@ -27,6 +27,24 @@ export default function App() {
     setCurrentStep(-1);
   }, [strudel]);
 
+  const handlePreviewRow = useCallback(
+    (
+      track: { type: string; sound: string; bank: string },
+      rowLabel: string,
+    ) => {
+      let code: string;
+      if (track.type === "drums") {
+        code = track.bank
+          ? `s("${rowLabel}").bank("${track.bank}")`
+          : `s("${rowLabel}")`;
+      } else {
+        code = `note("${rowLabel}").s("${track.sound}")`;
+      }
+      strudel.preview(code);
+    },
+    [strudel],
+  );
+
   // Re-evaluate pattern live when tracks change while playing
   useEffect(() => {
     if (!strudel.isPlaying) return;
@@ -101,6 +119,12 @@ export default function App() {
             onSetTrackName={tracks.setTrackName}
             onAddDrumRow={tracks.addDrumRow}
             onRemoveDrumRow={tracks.removeDrumRow}
+            onPreviewRow={(trackId, rowLabel) =>
+              handlePreviewRow(
+                tracks.project.tracks.find((t) => t.id === trackId)!,
+                rowLabel,
+              )
+            }
           />
         </div>
 

@@ -23,6 +23,8 @@ export function useStrudel() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const initedRef = useRef(false);
+  const currentCodeRef = useRef<string | null>(null);
+  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (initedRef.current) return;
@@ -48,6 +50,7 @@ export function useStrudel() {
     try {
       await ensureStrudel();
       setReady(true);
+      currentCodeRef.current = code;
       await evaluateFn!(code);
       setIsPlaying(true);
     } catch (err) {
@@ -61,8 +64,29 @@ export function useStrudel() {
     } catch {
       // ignore
     }
+    currentCodeRef.current = null;
     setIsPlaying(false);
   }, []);
 
-  return { play, stop, isPlaying, ready };
+  const preview = useCallback(async (code: string) => {
+    try {
+      await ensureStrudel();
+      setReady(true);
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      const wasPlaying = currentCodeRef.current;
+      await evaluateFn!(code);
+      previewTimerRef.current = setTimeout(async () => {
+        previewTimerRef.current = null;
+        if (wasPlaying) {
+          await evaluateFn!(wasPlaying);
+        } else {
+          hushFn?.();
+        }
+      }, 500);
+    } catch (err) {
+      console.error("Preview error:", err);
+    }
+  }, []);
+
+  return { play, stop, preview, isPlaying, ready };
 }

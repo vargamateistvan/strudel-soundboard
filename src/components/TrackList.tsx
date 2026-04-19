@@ -16,6 +16,7 @@ interface TrackListProps {
   onSetTrackName: (trackId: string, name: string) => void;
   onAddDrumRow: (trackId: string, drumSound: string) => void;
   onRemoveDrumRow: (trackId: string, rowIndex: number) => void;
+  onPreviewRow: (trackId: string, rowLabel: string) => void;
 }
 
 export function TrackList({
@@ -32,6 +33,7 @@ export function TrackList({
   onSetTrackName,
   onAddDrumRow,
   onRemoveDrumRow,
+  onPreviewRow,
 }: TrackListProps) {
   return (
     <div className="track-list">
@@ -57,6 +59,7 @@ export function TrackList({
           onSetName={(name) => onSetTrackName(track.id, name)}
           onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
           onRemoveDrumRow={(idx) => onRemoveDrumRow(track.id, idx)}
+          onPreviewRow={(rowLabel) => onPreviewRow(track.id, rowLabel)}
         />
       ))}
 

@@ -16,6 +16,7 @@ interface TrackProps {
   onSetName: (name: string) => void;
   onAddDrumRow: (sound: string) => void;
   onRemoveDrumRow: (rowIndex: number) => void;
+  onPreviewRow: (rowLabel: string) => void;
 }
 
 export function Track({
@@ -32,6 +33,7 @@ export function Track({
   onSetName,
   onAddDrumRow,
   onRemoveDrumRow,
+  onPreviewRow,
 }: TrackProps) {
   return (
     <div
@@ -55,6 +57,7 @@ export function Track({
         currentStep={currentStep}
         onToggleStep={onToggleStep}
         onRemoveDrumRow={onRemoveDrumRow}
+        onPreviewRow={onPreviewRow}
       />
     </div>
   );
