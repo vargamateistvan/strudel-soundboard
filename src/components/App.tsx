@@ -36,12 +36,18 @@ export default function App() {
     localStorage.setItem("strudel-sb-theme", theme);
   }, [theme]);
 
-  const handlePlay = useCallback(async () => {
+  // Connect analyser eagerly once Strudel is ready (non-blocking)
+  useEffect(() => {
+    if (strudel.ready) {
+      analyser.connect();
+    }
+  }, [strudel.ready, analyser]);
+
+  const handlePlay = useCallback(() => {
     const code = buildPatternCode(tracks.project);
     if (!code) return;
-    await analyser.connect();
     strudel.play(code);
-  }, [strudel, tracks.project, analyser]);
+  }, [strudel, tracks.project]);
 
   const handleStop = useCallback(() => {
     strudel.stop();

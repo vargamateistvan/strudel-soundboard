@@ -3,6 +3,7 @@ import { useRef, useCallback, useEffect, useState } from "react";
 let strudelReady: Promise<void> | null = null;
 let evaluateFn: ((code: string) => Promise<void>) | null = null;
 let hushFn: (() => void) | null = null;
+let getAudioContextFn: (() => AudioContext) | null = null;
 
 async function ensureStrudel() {
   if (!strudelReady) {
@@ -12,6 +13,7 @@ async function ensureStrudel() {
       await mod.initStrudel();
       evaluateFn = mod.evaluate;
       hushFn = mod.hush;
+      getAudioContextFn = mod.getAudioContext;
       // Load default drum samples from tidal-drum-machines
       await mod.samples("github:tidalcycles/dirt-samples");
     })();
@@ -35,11 +37,23 @@ export function useStrudel() {
   const play = useCallback(async (code: string) => {
     if (!code.trim()) return;
     try {
-      await ensureStrudel();
-      setReady(true);
+      if (!evaluateFn) {
+        await ensureStrudel();
+        setReady(true);
+      }
+      // Resume AudioContext synchronously in the user-gesture frame
+      if (getAudioContextFn) {
+        const ctx = getAudioContextFn() as AudioContext;
+        if (ctx.state === "suspended") {
+          ctx.resume();
+        }
+      }
+      // Set playing state eagerly so UI responds immediately
       currentCodeRef.current = code;
-      await evaluateFn!(code);
       setIsPlaying(true);
+      evaluateFn!(code).catch((err: unknown) =>
+        console.error("Strudel evaluate error:", err),
+      );
     } catch (err) {
       console.error("Strudel play error:", err);
     }
