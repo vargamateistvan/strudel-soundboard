@@ -820,3 +820,219 @@ body::after {
   background: var(--neon-pink);
   box-shadow: 0 0 6px rgba(255, 45, 226, 0.4);
 }
+
+/* ===== MOBILE RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .app {
+    padding: 6px;
+  }
+
+  /* -- Toolbar -- */
+  .toolbar {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .toolbar-slider {
+    width: 60px;
+  }
+
+  .toolbar-actions {
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+
+  .toolbar-actions .toolbar-btn {
+    flex: 1;
+  }
+
+  /* -- Tracks: stack header above grid -- */
+  .track {
+    flex-direction: column;
+    border-left: 4px solid var(--track-color, var(--neon-pink));
+  }
+
+  .track-header {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 2px solid var(--border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .track-header-top {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .track-name-input {
+    width: 80px;
+    font-size: 0.45rem;
+  }
+
+  .track-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .track-select {
+    width: auto;
+    min-width: 60px;
+    flex: 1;
+  }
+
+  .track-toggles {
+    gap: 4px;
+  }
+
+  .volume-slider {
+    width: 60px;
+    flex: 0;
+  }
+
+  /* -- Step grid: smaller cells -- */
+  .step-cell {
+    width: 26px;
+    min-width: 26px;
+    height: 22px;
+  }
+
+  .step-number {
+    width: 26px;
+    min-width: 26px;
+    font-size: 0.3rem;
+  }
+
+  .row-label {
+    width: 36px;
+    min-width: 36px;
+    font-size: 0.35rem;
+  }
+
+  .row-label-text {
+    font-size: 0.35rem;
+  }
+
+  .step-grid-container {
+    padding: 4px;
+  }
+
+  /* -- Add track buttons -- */
+  .add-track-buttons {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 8px;
+  }
+
+  .add-track-btn {
+    width: 100%;
+  }
+
+  /* -- Modals -- */
+  .modal {
+    width: 96%;
+    max-height: 90vh;
+  }
+
+  .modal-header h2 {
+    font-size: 0.5rem;
+  }
+
+  /* -- Code Preview -- */
+  .code-preview {
+    max-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 4px;
+  }
+
+  /* -- Toolbar: tighter -- */
+  .toolbar {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .transport-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+
+  .toolbar-label {
+    font-size: 0.4rem;
+  }
+
+  .toolbar-input {
+    width: 44px;
+    font-size: 0.4rem;
+    padding: 3px 4px;
+  }
+
+  .toolbar-slider {
+    width: 50px;
+  }
+
+  .toolbar-btn {
+    font-size: 0.4rem;
+    padding: 5px 8px;
+  }
+
+  /* -- Tracks -- */
+  .track-name-input {
+    width: 60px;
+    font-size: 0.4rem;
+  }
+
+  /* -- Step grid: even smaller cells -- */
+  .step-cell {
+    width: 22px;
+    min-width: 22px;
+    height: 20px;
+  }
+
+  .step-number {
+    width: 22px;
+    min-width: 22px;
+    font-size: 0.25rem;
+  }
+
+  .row-label {
+    width: 30px;
+    min-width: 30px;
+    font-size: 0.3rem;
+    padding-right: 4px;
+  }
+
+  .row-label-text {
+    font-size: 0.3rem;
+  }
+
+  .step-cells {
+    gap: 1px;
+  }
+
+  .step-grid {
+    gap: 1px;
+  }
+
+  /* -- Empty state -- */
+  .empty-state {
+    padding: 30px 12px;
+    font-size: 0.5rem;
+  }
+}
