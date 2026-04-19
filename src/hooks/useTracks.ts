@@ -457,6 +457,13 @@ export function useTracks() {
     dispatch({ type: "IMPORT_PROJECT", project });
   }, []);
 
+  const newProject = useCallback(() => {
+    dispatch({
+      type: "IMPORT_PROJECT",
+      project: { ...initialProject, tracks: [] },
+    });
+  }, []);
+
   const addPresetTracks = useCallback((tracks: import("../types").Track[]) => {
     dispatch({ type: "ADD_PRESET_TRACKS", tracks });
   }, []);
@@ -516,6 +523,7 @@ export function useTracks() {
     addDrumRow,
     removeDrumRow,
     importProject,
+    newProject,
     addPresetTracks,
     reorderTracks,
     duplicateTrack,

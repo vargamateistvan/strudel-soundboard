@@ -147,6 +147,14 @@ export default function App() {
         onExport={() => setShowExport(true)}
         onImport={() => setShowImport(true)}
         onSaveLoad={() => setShowSaveLoad(true)}
+        onNewProject={() => {
+          if (
+            tracks.project.tracks.length === 0 ||
+            confirm("Start a new project? Unsaved changes will be lost.")
+          ) {
+            tracks.newProject();
+          }
+        }}
         onUndo={tracks.undo}
         onRedo={tracks.redo}
         onLoadPreset={tracks.importProject}

@@ -152,6 +152,16 @@ export function SaveLoadModal({
                         Load
                       </button>
                       <button
+                        className="toolbar-btn action-btn"
+                        onClick={() => {
+                          saveProject(entry.name, project);
+                          setSaved(listProjects());
+                        }}
+                        title="Overwrite with current project"
+                      >
+                        Overwrite
+                      </button>
+                      <button
                         className="toolbar-btn action-btn danger-btn"
                         onClick={() => handleDelete(entry.name)}
                       >

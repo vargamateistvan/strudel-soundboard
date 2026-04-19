@@ -15,6 +15,7 @@ interface ToolbarProps {
   onExport: () => void;
   onImport: () => void;
   onSaveLoad: () => void;
+  onNewProject: () => void;
   onUndo: () => void;
   onRedo: () => void;
   onLoadPreset: (project: import("../types").Project) => void;
@@ -37,6 +38,7 @@ export function Toolbar({
   onExport,
   onImport,
   onSaveLoad,
+  onNewProject,
   onUndo,
   onRedo,
   onLoadPreset,
@@ -151,6 +153,13 @@ export function Toolbar({
       </div>
 
       <div className="toolbar-group toolbar-actions">
+        <button
+          className="toolbar-btn action-btn"
+          onClick={onNewProject}
+          title="New Project"
+        >
+          📄 New
+        </button>
         <button
           className="toolbar-btn action-btn"
           onClick={onSaveLoad}
