@@ -288,6 +288,13 @@ export function useStrudel() {
     }
   }, []);
 
+  // Cleanup preview timer on unmount
+  useEffect(() => {
+    return () => {
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+    };
+  }, []);
+
   return {
     play,
     stop,

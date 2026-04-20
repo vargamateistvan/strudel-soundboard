@@ -104,7 +104,7 @@ export function downloadProject(name: string, project: Project): void {
   a.href = url;
   a.download = `${name}.strudel.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 export function uploadProject(file: File): Promise<Project> {

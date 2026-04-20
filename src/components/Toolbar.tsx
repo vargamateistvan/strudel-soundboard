@@ -86,6 +86,7 @@ export function Toolbar({
           className={`toolbar-btn transport-btn ${isPlaying ? "playing" : ""} tooltip-below`}
           onClick={isPlaying ? onStop : onPlay}
           data-tooltip={isPlaying ? "Stop (Space)" : "Play (Space)"}
+          aria-label={isPlaying ? "Stop" : "Play"}
         >
           {isPlaying ? "⏹" : "▶"}
         </button>
@@ -93,6 +94,7 @@ export function Toolbar({
           className={`toolbar-btn transport-btn record-btn ${isRecording ? "recording" : ""} tooltip-below`}
           onClick={isRecording ? onStopRecording : onRecord}
           data-tooltip={isRecording ? "Stop Recording" : "Record"}
+          aria-label={isRecording ? "Stop Recording" : "Record"}
         >
           {isRecording ? "⏺" : "⏺"}
         </button>
@@ -104,6 +106,7 @@ export function Toolbar({
           onClick={onUndo}
           disabled={!canUndo}
           data-tooltip="Undo (Ctrl+Z)"
+          aria-label="Undo"
         >
           ↩
         </button>
@@ -112,6 +115,7 @@ export function Toolbar({
           onClick={onRedo}
           disabled={!canRedo}
           data-tooltip="Redo (Ctrl+Shift+Z)"
+          aria-label="Redo"
         >
           ↪
         </button>
@@ -251,6 +255,7 @@ export function Toolbar({
           className="toolbar-btn action-btn help-btn tooltip-below"
           onClick={onHelp}
           data-tooltip="Help"
+          aria-label="Help"
         >
           ?
         </button>
@@ -260,6 +265,7 @@ export function Toolbar({
           target="_blank"
           rel="noopener noreferrer"
           data-tooltip="Report a bug"
+          aria-label="Report a bug"
         >
           🐛
         </a>

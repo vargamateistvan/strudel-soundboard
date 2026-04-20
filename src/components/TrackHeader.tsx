@@ -75,6 +75,7 @@ export function TrackHeader({
             className="track-dup-btn"
             onClick={onDuplicate}
             data-tooltip="Duplicate track"
+            aria-label="Duplicate track"
           >
             ⧉
           </button>
@@ -82,6 +83,7 @@ export function TrackHeader({
             className="track-remove-btn"
             onClick={onRemove}
             data-tooltip="Remove track"
+            aria-label="Remove track"
           >
             ✕
           </button>
@@ -169,6 +171,7 @@ export function TrackHeader({
           className={`toggle-btn mute-btn ${track.muted ? "active" : ""}`}
           onClick={onToggleMute}
           data-tooltip={track.muted ? "Unmute" : "Mute"}
+          aria-label={track.muted ? "Unmute" : "Mute"}
         >
           M
         </button>
@@ -176,6 +179,7 @@ export function TrackHeader({
           className={`toggle-btn solo-btn ${track.solo ? "active" : ""}`}
           onClick={onToggleSolo}
           data-tooltip={track.solo ? "Unsolo" : "Solo – only this track"}
+          aria-label={track.solo ? "Unsolo" : "Solo"}
         >
           S
         </button>
@@ -193,6 +197,7 @@ export function TrackHeader({
           className={`toggle-btn fx-btn ${showFx ? "active" : ""}`}
           onClick={() => setShowFx(!showFx)}
           data-tooltip="Effects: delay, reverb, filter, distortion"
+          aria-label="Toggle effects panel"
         >
           FX
         </button>
@@ -200,6 +205,7 @@ export function TrackHeader({
           className={`toggle-btn mod-btn ${showMod ? "active" : ""}`}
           onClick={() => setShowMod(!showMod)}
           data-tooltip="Modifiers: speed, degrade, euclidean"
+          aria-label="Toggle modifiers panel"
         >
           MOD
         </button>
@@ -207,6 +213,7 @@ export function TrackHeader({
           className={`toggle-btn tools-btn ${showTools ? "active" : ""}`}
           onClick={() => setShowTools(!showTools)}
           data-tooltip="Tools: copy, paste, shift, randomize"
+          aria-label="Toggle tools panel"
         >
           ✂
         </button>

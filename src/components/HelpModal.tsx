@@ -4,8 +4,20 @@ interface HelpModalProps {
 
 export function HelpModal({ onClose }: HelpModalProps) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal help-modal" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+    >
+      <div
+        className="modal help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Help"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-header">
           <h2>How to Use Strudel Soundboard</h2>
           <button className="modal-close" onClick={onClose}>

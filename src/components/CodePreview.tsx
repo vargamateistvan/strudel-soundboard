@@ -19,6 +19,13 @@ export function CodePreview({ project, onImport }: CodePreviewProps) {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const ignoreNextProjectRef = useRef(false);
 
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   const code = useMemo(() => {
     if (mode === "live") return buildPatternCode(project);
     return toMiniNotation(project);

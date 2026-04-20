@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useStrudel, unlockAudio } from "../hooks/useStrudel";
 import { useTracks } from "../hooks/useTracks";
 import { buildPatternCode } from "../lib/patternBuilder";
@@ -102,9 +102,13 @@ export default function App() {
     [strudel],
   );
 
+  // Track playing state in a ref for the live re-evaluate effect
+  const isPlayingRef = useRef(strudel.isPlaying);
+  isPlayingRef.current = strudel.isPlaying;
+
   // Re-evaluate pattern live when tracks change while playing
   useEffect(() => {
-    if (!strudel.isPlaying) return;
+    if (!isPlayingRef.current) return;
     const code = buildPatternCode(tracks.project);
     if (!code) {
       strudel.stop();
@@ -229,12 +233,10 @@ export default function App() {
             onSetTrackName={tracks.setTrackName}
             onAddDrumRow={tracks.addDrumRow}
             onRemoveDrumRow={tracks.removeDrumRow}
-            onPreviewRow={(trackId, rowLabel) =>
-              handlePreviewRow(
-                tracks.project.tracks.find((t) => t.id === trackId)!,
-                rowLabel,
-              )
-            }
+            onPreviewRow={(trackId, rowLabel) => {
+              const track = tracks.project.tracks.find((t) => t.id === trackId);
+              if (track) handlePreviewRow(track, rowLabel);
+            }}
             onReorderTracks={tracks.reorderTracks}
             onDuplicateTrack={tracks.duplicateTrack}
             onSetVelocity={tracks.setVelocity}

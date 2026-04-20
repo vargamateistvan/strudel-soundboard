@@ -172,9 +172,13 @@ export function Visualizer({
       if (!running) return;
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      const newW = Math.round(rect.width * dpr);
+      const newH = Math.round(rect.height * dpr);
+      if (canvas.width !== newW || canvas.height !== newH) {
+        canvas.width = newW;
+        canvas.height = newH;
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const w = rect.width;
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);

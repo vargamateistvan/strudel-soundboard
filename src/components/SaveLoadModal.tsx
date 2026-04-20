@@ -72,9 +72,18 @@ export function SaveLoadModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
+    >
       <div
         className="modal save-load-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Save or Load Project"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-header">

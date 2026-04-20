@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 // @ts-expect-error — lamejs uses commonjs exports
 import lamejs from "lamejs";
 import {
@@ -178,6 +178,24 @@ export function useRecorder() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 1000);
+  }, []);
+
+  // Cleanup on unmount if still recording
+  useEffect(() => {
+    return () => {
+      if (workletNodeRef.current) {
+        workletNodeRef.current.port.postMessage("stop");
+        try {
+          workletNodeRef.current.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
+      streamCtxRef.current?.close().catch(() => {});
+      if (destRef.current) removeTapTarget(destRef.current);
+      leftChunksRef.current = [];
+      rightChunksRef.current = [];
+    };
   }, []);
 
   return { isRecording, startRecording, stopRecording };
