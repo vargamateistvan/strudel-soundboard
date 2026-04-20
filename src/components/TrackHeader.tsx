@@ -74,14 +74,14 @@ export function TrackHeader({
           <button
             className="track-dup-btn"
             onClick={onDuplicate}
-            title="Duplicate track"
+            data-tooltip="Duplicate track"
           >
             ⧉
           </button>
           <button
             className="track-remove-btn"
             onClick={onRemove}
-            title="Remove track"
+            data-tooltip="Remove track"
           >
             ✕
           </button>
@@ -168,14 +168,14 @@ export function TrackHeader({
         <button
           className={`toggle-btn mute-btn ${track.muted ? "active" : ""}`}
           onClick={onToggleMute}
-          title="Mute"
+          data-tooltip={track.muted ? "Unmute" : "Mute"}
         >
           M
         </button>
         <button
           className={`toggle-btn solo-btn ${track.solo ? "active" : ""}`}
           onClick={onToggleSolo}
-          title="Solo"
+          data-tooltip={track.solo ? "Unsolo" : "Solo – only this track"}
         >
           S
         </button>
@@ -192,21 +192,21 @@ export function TrackHeader({
         <button
           className={`toggle-btn fx-btn ${showFx ? "active" : ""}`}
           onClick={() => setShowFx(!showFx)}
-          title="Effects"
+          data-tooltip="Effects: delay, reverb, filter, distortion"
         >
           FX
         </button>
         <button
           className={`toggle-btn mod-btn ${showMod ? "active" : ""}`}
           onClick={() => setShowMod(!showMod)}
-          title="Pattern Modifiers"
+          data-tooltip="Modifiers: speed, degrade, euclidean"
         >
           MOD
         </button>
         <button
           className={`toggle-btn tools-btn ${showTools ? "active" : ""}`}
           onClick={() => setShowTools(!showTools)}
-          title="Pattern Tools"
+          data-tooltip="Tools: copy, paste, shift, randomize"
         >
           ✂
         </button>
@@ -217,7 +217,7 @@ export function TrackHeader({
             const val = e.target.value;
             onSetLoopLength(val ? Number(val) : undefined);
           }}
-          title="Loop length"
+          data-tooltip="Loop length"
         >
           <option value="">🔁 All</option>
           {[4, 8, 12, 16, 24, 32, 48, 64, 128]
@@ -246,49 +246,49 @@ export function TrackHeader({
           <button
             className="pattern-tool-btn"
             onClick={onCopySteps}
-            title="Copy pattern"
+            data-tooltip="Copy pattern"
           >
             📋 Copy
           </button>
           <button
             className="pattern-tool-btn"
             onClick={onPasteSteps}
-            title="Paste pattern"
+            data-tooltip="Paste pattern"
           >
             📌 Paste
           </button>
           <button
             className="pattern-tool-btn"
             onClick={() => onShiftPattern(-1)}
-            title="Shift left"
+            data-tooltip="Shift pattern left"
           >
             ◀ Shift
           </button>
           <button
             className="pattern-tool-btn"
             onClick={() => onShiftPattern(1)}
-            title="Shift right"
+            data-tooltip="Shift pattern right"
           >
             Shift ▶
           </button>
           <button
             className="pattern-tool-btn"
             onClick={() => onRandomizePattern(0.3)}
-            title="Randomize (30% density)"
+            data-tooltip="Randomize at 30% density"
           >
             🎲 Random
           </button>
           <button
             className="pattern-tool-btn"
             onClick={onReverseSteps}
-            title="Reverse steps"
+            data-tooltip="Reverse step order"
           >
             ↔ Reverse
           </button>
           <button
             className="pattern-tool-btn"
             onClick={onClearTrack}
-            title="Clear all steps"
+            data-tooltip="Clear all steps"
           >
             🗑 Clear
           </button>

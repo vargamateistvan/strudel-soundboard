@@ -474,7 +474,7 @@ select.add-track-btn option {
   border: 2px solid var(--border);
   border-left: 4px solid var(--track-color, var(--neon-pink));
   display: flex;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 0 8px rgba(255, 45, 226, 0.1);
   position: relative;
 }
@@ -2263,6 +2263,42 @@ select.add-track-btn option {
   white-space: nowrap;
   width: 1%;
   padding-right: 16px;
+}
+
+/* ===== CUSTOM TOOLTIPS ===== */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 6px rgba(0, 255, 247, 0.2);
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+  z-index: 1000;
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+}
+
+[data-tooltip].tooltip-below::after {
+  bottom: auto;
+  top: calc(100% + 6px);
 }
 
 /* ===== PROBABILITY INDICATOR ===== */

@@ -83,16 +83,16 @@ export function Toolbar({
     <div className="toolbar">
       <div className="toolbar-group">
         <button
-          className={`toolbar-btn transport-btn ${isPlaying ? "playing" : ""}`}
+          className={`toolbar-btn transport-btn ${isPlaying ? "playing" : ""} tooltip-below`}
           onClick={isPlaying ? onStop : onPlay}
-          title={isPlaying ? "Stop (Space)" : "Play (Space)"}
+          data-tooltip={isPlaying ? "Stop (Space)" : "Play (Space)"}
         >
           {isPlaying ? "⏹" : "▶"}
         </button>
         <button
-          className={`toolbar-btn transport-btn record-btn ${isRecording ? "recording" : ""}`}
+          className={`toolbar-btn transport-btn record-btn ${isRecording ? "recording" : ""} tooltip-below`}
           onClick={isRecording ? onStopRecording : onRecord}
-          title={isRecording ? "Stop Recording" : "Record"}
+          data-tooltip={isRecording ? "Stop Recording" : "Record"}
         >
           {isRecording ? "⏺" : "⏺"}
         </button>
@@ -100,18 +100,18 @@ export function Toolbar({
 
       <div className="toolbar-group">
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onUndo}
           disabled={!canUndo}
-          title="Undo (Ctrl+Z)"
+          data-tooltip="Undo (Ctrl+Z)"
         >
           ↩
         </button>
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onRedo}
           disabled={!canRedo}
-          title="Redo (Ctrl+Shift+Z)"
+          data-tooltip="Redo (Ctrl+Shift+Z)"
         >
           ↪
         </button>
@@ -140,9 +140,9 @@ export function Toolbar({
           onChange={(e) => onBpmChange(Number(e.target.value))}
         />
         <button
-          className="toolbar-btn action-btn tap-tempo-btn"
+          className="toolbar-btn action-btn tap-tempo-btn tooltip-below"
           onClick={handleTapTempo}
-          title="Tap to set BPM"
+          data-tooltip="Tap to set BPM"
         >
           TAP
         </button>
@@ -205,30 +205,30 @@ export function Toolbar({
 
       <div className="toolbar-group toolbar-actions">
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onNewProject}
-          title="New Project"
+          data-tooltip="New Project"
         >
           📄 New
         </button>
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onSaveLoad}
-          title="Save / Load Project"
+          data-tooltip="Save / Load Project"
         >
           💾 Save/Load
         </button>
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onImport}
-          title="Import Code"
+          data-tooltip="Import Code"
         >
           📥 Import
         </button>
         <button
-          className="toolbar-btn action-btn"
+          className="toolbar-btn action-btn tooltip-below"
           onClick={onExport}
-          title="Export Code"
+          data-tooltip="Export Code"
         >
           📤 Export
         </button>
@@ -239,7 +239,7 @@ export function Toolbar({
           className="toolbar-select theme-select"
           value={theme}
           onChange={(e) => onThemeChange(e.target.value)}
-          title="Theme"
+          data-tooltip="Theme"
         >
           <option value="synthwave">🌌 Synthwave</option>
           <option value="terminal">💚 Terminal</option>
@@ -248,18 +248,18 @@ export function Toolbar({
           <option value="light">☀️ Light</option>
         </select>
         <button
-          className="toolbar-btn action-btn help-btn"
+          className="toolbar-btn action-btn help-btn tooltip-below"
           onClick={onHelp}
-          title="Help"
+          data-tooltip="Help"
         >
           ?
         </button>
         <a
-          className="toolbar-btn action-btn bug-report-link"
+          className="toolbar-btn action-btn bug-report-link tooltip-below"
           href="https://github.com/vargamateistvan/strudel-soundboard/issues"
           target="_blank"
           rel="noopener noreferrer"
-          title="Report a bug"
+          data-tooltip="Report a bug"
         >
           🐛
         </a>

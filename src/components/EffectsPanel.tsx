@@ -8,6 +8,7 @@ interface EffectsPanelProps {
 const EFFECT_DEFS: {
   key: keyof TrackEffects;
   label: string;
+  tooltip: string;
   min: number;
   max: number;
   step: number;
@@ -17,6 +18,7 @@ const EFFECT_DEFS: {
   {
     key: "delay",
     label: "DLY",
+    tooltip: "Delay – echo/repeat effect amount",
     min: 0,
     max: 1,
     step: 0.05,
@@ -26,6 +28,7 @@ const EFFECT_DEFS: {
   {
     key: "delaytime",
     label: "D.T",
+    tooltip: "Delay Time – interval between echoes",
     min: 0.05,
     max: 1,
     step: 0.05,
@@ -35,6 +38,7 @@ const EFFECT_DEFS: {
   {
     key: "room",
     label: "REV",
+    tooltip: "Reverb – room size / space",
     min: 0,
     max: 1,
     step: 0.05,
@@ -44,6 +48,7 @@ const EFFECT_DEFS: {
   {
     key: "lpf",
     label: "LPF",
+    tooltip: "Low-Pass Filter – cuts high frequencies",
     min: 100,
     max: 20000,
     step: 100,
@@ -53,6 +58,7 @@ const EFFECT_DEFS: {
   {
     key: "distort",
     label: "DST",
+    tooltip: "Distortion – overdrive / saturation",
     min: 0,
     max: 1,
     step: 0.05,
@@ -62,6 +68,7 @@ const EFFECT_DEFS: {
   {
     key: "crush",
     label: "BIT",
+    tooltip: "Bit Crush – lo-fi bit reduction",
     min: 0,
     max: 16,
     step: 1,
@@ -71,6 +78,7 @@ const EFFECT_DEFS: {
   {
     key: "pan",
     label: "PAN",
+    tooltip: "Pan – stereo position (L/C/R)",
     min: 0,
     max: 1,
     step: 0.05,
@@ -85,6 +93,7 @@ const EFFECT_DEFS: {
   {
     key: "hpf",
     label: "HPF",
+    tooltip: "High-Pass Filter – cuts low frequencies",
     min: 20,
     max: 20000,
     step: 100,
@@ -97,7 +106,7 @@ export function EffectsPanel({ effects, onChange }: EffectsPanelProps) {
   return (
     <div className="effects-panel">
       {EFFECT_DEFS.map((def) => (
-        <div key={def.key} className="effect-knob">
+        <div key={def.key} className="effect-knob" data-tooltip={def.tooltip}>
           <label className="effect-label">{def.label}</label>
           <input
             type="range"

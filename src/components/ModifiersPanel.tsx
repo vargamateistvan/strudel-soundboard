@@ -13,7 +13,10 @@ export function ModifiersPanel({ modifiers, onChange }: ModifiersPanelProps) {
 
   return (
     <div className="modifiers-panel">
-      <div className="effect-knob">
+      <div
+        className="effect-knob"
+        data-tooltip="Reverse – play pattern backwards"
+      >
         <label className="effect-label">REV</label>
         <button
           className={`mod-toggle ${m.reverse ? "active" : ""}`}
@@ -23,7 +26,10 @@ export function ModifiersPanel({ modifiers, onChange }: ModifiersPanelProps) {
         </button>
       </div>
 
-      <div className="effect-knob">
+      <div
+        className="effect-knob"
+        data-tooltip="Speed – playback rate multiplier"
+      >
         <label className="effect-label">SPD</label>
         <input
           type="range"
@@ -37,7 +43,10 @@ export function ModifiersPanel({ modifiers, onChange }: ModifiersPanelProps) {
         <span className="effect-value">{m.speed}x</span>
       </div>
 
-      <div className="effect-knob">
+      <div
+        className="effect-knob"
+        data-tooltip="Probability – chance each step plays"
+      >
         <label className="effect-label">PROB</label>
         <input
           type="range"
@@ -51,7 +60,10 @@ export function ModifiersPanel({ modifiers, onChange }: ModifiersPanelProps) {
         <span className="effect-value">{Math.round(m.probability * 100)}%</span>
       </div>
 
-      <div className="effect-knob">
+      <div
+        className="effect-knob"
+        data-tooltip="Every – apply change every Nth cycle"
+      >
         <label className="effect-label">EVERY</label>
         <select
           className="mod-select"
