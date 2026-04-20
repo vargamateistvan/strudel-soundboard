@@ -287,7 +287,13 @@ export default function App() {
 
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
-      <Snackbar message={strudel.error} onClose={strudel.clearError} />
+      <Snackbar
+        message={strudel.error || tracks.saveError}
+        onClose={() => {
+          strudel.clearError();
+          tracks.clearSaveError();
+        }}
+      />
     </div>
   );
 }

@@ -179,11 +179,24 @@ export function Visualizer({
       const h = rect.height;
       ctx.clearRect(0, 0, w, h);
 
-      if (mode === "bars") drawBars(ctx, w, h, dpr);
-      else if (mode === "spectrum") drawSpectrum(ctx, w, h);
-      else drawWaveform(ctx, w, h);
-
-      rafRef.current = requestAnimationFrame(draw);
+      if (mode === "bars") {
+        drawBars(ctx, w, h, dpr);
+        // Keep animating for decay even after stopping
+        const hasDecay = decayRef.current.some((v) => v > 0.01);
+        if (isPlaying || hasDecay) {
+          rafRef.current = requestAnimationFrame(draw);
+        }
+      } else if (mode === "spectrum") {
+        drawSpectrum(ctx, w, h);
+        if (isPlaying) {
+          rafRef.current = requestAnimationFrame(draw);
+        }
+      } else {
+        drawWaveform(ctx, w, h);
+        if (isPlaying) {
+          rafRef.current = requestAnimationFrame(draw);
+        }
+      }
     };
 
     rafRef.current = requestAnimationFrame(draw);

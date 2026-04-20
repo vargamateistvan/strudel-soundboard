@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useRef } from "react";
+import { useReducer, useCallback, useEffect, useRef, useState } from "react";
 import type {
   Project,
   Track,
@@ -23,24 +23,20 @@ function createEmptySteps(rowCount: number, stepCount: number): Step[][] {
   );
 }
 
-let nextId = 1;
-
-/** Ensure nextId is higher than any existing track ID to prevent collisions */
-function syncNextId(tracks: { id: string }[]) {
-  for (const t of tracks) {
-    const m = t.id.match(/^track-(\d+)/);
-    if (m) {
-      const n = parseInt(m[1], 10);
-      if (n >= nextId) nextId = n + 1;
-    }
-  }
+function generateTrackId(): string {
+  return `track-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function createDrumTrack(stepCount: number): Track {
+function countTracksOfType(tracks: Track[], type: Track["type"]): number {
+  return tracks.filter((t) => t.type === type).length;
+}
+
+function createDrumTrack(stepCount: number, existingTracks: Track[]): Track {
+  const n = countTracksOfType(existingTracks, "drums") + 1;
   const rows = [...DEFAULT_DRUM_ROWS];
   return {
-    id: `track-${nextId++}`,
-    name: `Drums ${nextId - 1}`,
+    id: generateTrackId(),
+    name: `Drums ${n}`,
     type: "drums",
     sound: "bd",
     bank: "",
@@ -53,11 +49,12 @@ function createDrumTrack(stepCount: number): Track {
   };
 }
 
-function createMelodicTrack(stepCount: number): Track {
+function createMelodicTrack(stepCount: number, existingTracks: Track[]): Track {
+  const n = countTracksOfType(existingTracks, "melodic") + 1;
   const rows = [...MELODIC_NOTES];
   return {
-    id: `track-${nextId++}`,
-    name: `Synth ${nextId - 1}`,
+    id: generateTrackId(),
+    name: `Synth ${n}`,
     type: "melodic",
     sound: "triangle",
     bank: "",
@@ -70,11 +67,12 @@ function createMelodicTrack(stepCount: number): Track {
   };
 }
 
-function createPianoTrack(stepCount: number): Track {
+function createPianoTrack(stepCount: number, existingTracks: Track[]): Track {
+  const n = countTracksOfType(existingTracks, "piano") + 1;
   const rows = [...MELODIC_NOTES];
   return {
-    id: `track-${nextId++}`,
-    name: `Piano ${nextId - 1}`,
+    id: generateTrackId(),
+    name: `Piano ${n}`,
     type: "piano",
     sound: PIANO_SOUNDS[0],
     bank: "",
@@ -87,11 +85,12 @@ function createPianoTrack(stepCount: number): Track {
   };
 }
 
-function createGuitarTrack(stepCount: number): Track {
+function createGuitarTrack(stepCount: number, existingTracks: Track[]): Track {
+  const n = countTracksOfType(existingTracks, "guitar") + 1;
   const rows = [...MELODIC_NOTES];
   return {
-    id: `track-${nextId++}`,
-    name: `Guitar ${nextId - 1}`,
+    id: generateTrackId(),
+    name: `Guitar ${n}`,
     type: "guitar",
     sound: GUITAR_SOUNDS[0],
     bank: "",
@@ -162,12 +161,12 @@ function reducer(state: Project, action: Action): Project {
     case "ADD_TRACK": {
       const track =
         action.trackType === "drums"
-          ? createDrumTrack(state.stepCount)
+          ? createDrumTrack(state.stepCount, state.tracks)
           : action.trackType === "piano"
-            ? createPianoTrack(state.stepCount)
+            ? createPianoTrack(state.stepCount, state.tracks)
             : action.trackType === "guitar"
-              ? createGuitarTrack(state.stepCount)
-              : createMelodicTrack(state.stepCount);
+              ? createGuitarTrack(state.stepCount, state.tracks)
+              : createMelodicTrack(state.stepCount, state.tracks);
       return { ...state, tracks: [...state.tracks, track] };
     }
 
@@ -315,18 +314,16 @@ function reducer(state: Project, action: Action): Project {
       };
 
     case "IMPORT_PROJECT":
-      syncNextId(action.project.tracks);
       return { ...action.project };
 
     case "ADD_PRESET_TRACKS":
-      syncNextId(action.tracks);
       return {
         ...state,
         tracks: [
           ...state.tracks,
           ...action.tracks.map((t) => ({
             ...t,
-            id: `track-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            id: generateTrackId(),
           })),
         ],
       };
@@ -343,7 +340,7 @@ function reducer(state: Project, action: Action): Project {
       if (!src) return state;
       const clone: Track = {
         ...src,
-        id: `track-${nextId++}`,
+        id: generateTrackId(),
         name: `${src.name} copy`,
         steps: src.steps.map((row) => row.map((s) => ({ ...s }))),
         rows: [...src.rows],
@@ -410,12 +407,12 @@ function reducer(state: Project, action: Action): Project {
     case "INSERT_TRACK_AFTER": {
       const newTrack =
         action.trackType === "drums"
-          ? createDrumTrack(state.stepCount)
+          ? createDrumTrack(state.stepCount, state.tracks)
           : action.trackType === "piano"
-            ? createPianoTrack(state.stepCount)
+            ? createPianoTrack(state.stepCount, state.tracks)
             : action.trackType === "guitar"
-              ? createGuitarTrack(state.stepCount)
-              : createMelodicTrack(state.stepCount);
+              ? createGuitarTrack(state.stepCount, state.tracks)
+              : createMelodicTrack(state.stepCount, state.tracks);
       const afterIdx = state.tracks.findIndex(
         (t) => t.id === action.afterTrackId,
       );
@@ -576,7 +573,6 @@ function historyReducer(state: HistoryState, action: Action): HistoryState {
 
 function createInitialHistory(): HistoryState {
   const restored = autoLoad();
-  if (restored) syncNextId(restored.tracks);
   return {
     past: [],
     present: restored ?? initialProject,
@@ -593,10 +589,12 @@ export function useTracks() {
   const project = history.present;
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Auto-save whenever project changes
   useEffect(() => {
-    autoSave(project);
+    const err = autoSave(project);
+    if (err) setSaveError(err);
   }, [project]);
 
   const addTrack = useCallback(
@@ -805,6 +803,8 @@ export function useTracks() {
     randomizePattern,
     clearTrack,
     reverseSteps,
+    saveError,
+    clearSaveError: () => setSaveError(null),
     undo,
     redo,
   };

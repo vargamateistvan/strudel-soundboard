@@ -28,7 +28,11 @@ export function SaveLoadModal({
   const handleSave = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    saveProject(trimmed, project);
+    const err = saveProject(trimmed, project);
+    if (err) {
+      setError(err);
+      return;
+    }
     setSaved(listProjects());
     setName("");
     setError("");

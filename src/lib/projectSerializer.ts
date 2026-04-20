@@ -17,12 +17,16 @@ interface SavedEntry {
 
 // --- localStorage helpers ---
 
-export function autoSave(project: Project): void {
+export function autoSave(project: Project): string | null {
   try {
     const envelope: SavedEnvelope = { version: CURRENT_VERSION, project };
     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(envelope));
-  } catch {
-    // quota exceeded or private mode — silently ignore
+    return null;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      return "Storage quota exceeded — your changes may not be saved. Try deleting unused projects.";
+    }
+    return "Failed to save project to local storage.";
   }
 }
 
@@ -38,13 +42,21 @@ export function autoLoad(): Project | null {
   }
 }
 
-export function saveProject(name: string, project: Project): void {
-  const entry: SavedEntry = {
-    name,
-    savedAt: new Date().toISOString(),
-    data: { version: CURRENT_VERSION, project },
-  };
-  localStorage.setItem(PROJECT_PREFIX + name, JSON.stringify(entry));
+export function saveProject(name: string, project: Project): string | null {
+  try {
+    const entry: SavedEntry = {
+      name,
+      savedAt: new Date().toISOString(),
+      data: { version: CURRENT_VERSION, project },
+    };
+    localStorage.setItem(PROJECT_PREFIX + name, JSON.stringify(entry));
+    return null;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "QuotaExceededError") {
+      return "Storage quota exceeded — cannot save project. Try deleting unused projects.";
+    }
+    return "Failed to save project.";
+  }
 }
 
 export function loadProject(name: string): Project | null {

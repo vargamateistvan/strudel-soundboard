@@ -38,6 +38,24 @@ export function unlockAudio() {
   }
 }
 
+async function fetchWithRetry(
+  url: string,
+  retries = 3,
+  delay = 1000,
+): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res;
+    } catch (err) {
+      if (attempt === retries - 1) throw err;
+      await new Promise((r) => setTimeout(r, delay * (attempt + 1)));
+    }
+  }
+  throw new Error("Fetch failed");
+}
+
 async function ensureStrudel() {
   if (!strudelReady) {
     strudelReady = (async () => {
@@ -49,9 +67,10 @@ async function ensureStrudel() {
       getAudioContextFn = mod.getAudioContext;
       // Load default drum samples from tidal-drum-machines
       // Fetch the manifest and override _base to use jsDelivr CDN (avoids CORS/PNA blocks on GitHub Pages)
-      const dirtJson = await fetch(
+      const dirtRes = await fetchWithRetry(
         "https://cdn.jsdelivr.net/gh/tidalcycles/dirt-samples@main/strudel.json",
-      ).then((r) => r.json());
+      );
+      const dirtJson = await dirtRes.json();
       dirtJson._base =
         "https://cdn.jsdelivr.net/gh/tidalcycles/Dirt-Samples@master/";
       await mod.samples(dirtJson);

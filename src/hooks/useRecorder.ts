@@ -12,13 +12,38 @@ function floatTo16Bit(f: number): number {
   return v < 0 ? v * 0x8000 : v * 0x7fff;
 }
 
+const WORKLET_CODE = `
+class RecorderProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this._active = true;
+    this.port.onmessage = (e) => {
+      if (e.data === 'stop') this._active = false;
+    };
+  }
+  process(inputs) {
+    if (!this._active) return false;
+    const input = inputs[0];
+    if (input && input.length > 0) {
+      const left = new Float32Array(input[0]);
+      const right = input.length > 1 ? new Float32Array(input[1]) : new Float32Array(input[0]);
+      this.port.postMessage({ left, right }, [left.buffer, right.buffer]);
+    }
+    return true;
+  }
+}
+registerProcessor('recorder-processor', RecorderProcessor);
+`;
+
 export function useRecorder() {
   const [isRecording, setIsRecording] = useState(false);
   const leftChunksRef = useRef<Float32Array[]>([]);
   const rightChunksRef = useRef<Float32Array[]>([]);
   const sampleRateRef = useRef(44100);
-  const scriptRef = useRef<ScriptProcessorNode | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const streamCtxRef = useRef<AudioContext | null>(null);
   const destRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+
   const startRecording = useCallback(async () => {
     // @ts-expect-error — getAudioContext is exported but not typed
     const { getAudioContext } = await import("@strudel/web");
@@ -29,27 +54,31 @@ export function useRecorder() {
     const dest = ctx.createMediaStreamDestination();
     destRef.current = dest;
 
-    // Create a ScriptProcessorNode connected to the stream to capture raw PCM
+    // Create a secondary AudioContext to read from the MediaStreamDestination
     const streamCtx = new AudioContext({ sampleRate: ctx.sampleRate });
+    streamCtxRef.current = streamCtx;
     const source = streamCtx.createMediaStreamSource(dest.stream);
-    const processor = streamCtx.createScriptProcessor(4096, 2, 2);
 
     leftChunksRef.current = [];
     rightChunksRef.current = [];
 
-    processor.onaudioprocess = (e) => {
-      const left = e.inputBuffer.getChannelData(0);
-      const right =
-        e.inputBuffer.numberOfChannels > 1
-          ? e.inputBuffer.getChannelData(1)
-          : left;
-      leftChunksRef.current.push(new Float32Array(left));
-      rightChunksRef.current.push(new Float32Array(right));
+    // Register the AudioWorklet processor via Blob URL
+    const blob = new Blob([WORKLET_CODE], { type: "application/javascript" });
+    const workletUrl = URL.createObjectURL(blob);
+    await streamCtx.audioWorklet.addModule(workletUrl);
+    URL.revokeObjectURL(workletUrl);
+
+    const workletNode = new AudioWorkletNode(streamCtx, "recorder-processor");
+    workletNode.port.onmessage = (
+      e: MessageEvent<{ left: Float32Array; right: Float32Array }>,
+    ) => {
+      leftChunksRef.current.push(e.data.left);
+      rightChunksRef.current.push(e.data.right);
     };
 
-    source.connect(processor);
-    processor.connect(streamCtx.destination);
-    scriptRef.current = processor;
+    source.connect(workletNode);
+    workletNode.connect(streamCtx.destination);
+    workletNodeRef.current = workletNode;
 
     // Register the capture destination as a tap target
     installAudioTap(ctx);
@@ -61,17 +90,25 @@ export function useRecorder() {
   const stopRecording = useCallback(() => {
     setIsRecording(false);
 
-    // Clean up script processor
-    const processor = scriptRef.current;
-    if (processor) {
-      processor.onaudioprocess = null;
+    // Clean up AudioWorklet node
+    const workletNode = workletNodeRef.current;
+    if (workletNode) {
+      workletNode.port.postMessage("stop");
       try {
-        processor.disconnect();
+        workletNode.disconnect();
       } catch {
         /* ignore */
       }
-      scriptRef.current = null;
+      workletNodeRef.current = null;
     }
+
+    // Close the secondary AudioContext
+    const streamCtx = streamCtxRef.current;
+    if (streamCtx) {
+      streamCtx.close().catch(() => {});
+      streamCtxRef.current = null;
+    }
+
     const dest = destRef.current;
     destRef.current = null;
 
