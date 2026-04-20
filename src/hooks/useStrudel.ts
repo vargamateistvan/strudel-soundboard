@@ -13,6 +13,16 @@ let getAudioContextFn: (() => AudioContext) | null = null;
 export function unlockAudio() {
   if (!getAudioContextFn) return;
   const ctx = getAudioContextFn();
+
+  // Set audio session to "playback" so sound plays even when the iOS silent switch is on
+  try {
+    if ("audioSession" in navigator) {
+      (navigator as any).audioSession.type = "playback";
+    }
+  } catch {
+    // audioSession API not available — ignore
+  }
+
   // Play a 1-sample silent buffer to fully unlock iOS audio output
   try {
     const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
