@@ -260,7 +260,10 @@ export default function App() {
             isPlaying={strudel.isPlaying}
             analyserRef={analyser.analyser}
           />
-          <CodePreview project={tracks.project} />
+          <CodePreview
+            project={tracks.project}
+            onImport={tracks.importProject}
+          />
         </div>
       </div>
 

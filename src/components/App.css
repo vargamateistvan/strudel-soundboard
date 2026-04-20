@@ -1319,6 +1319,24 @@ select.add-track-btn option {
   background: var(--bg-primary);
 }
 
+.code-preview-textarea {
+  resize: none;
+  border: none;
+  outline: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-top: 2px solid var(--neon-cyan);
+}
+
+.code-preview-error {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.65rem;
+  color: var(--danger);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
 /* ---- Scrollbar ---- */
 ::-webkit-scrollbar {
   width: 6px;
