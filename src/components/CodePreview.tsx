@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { Project } from "../types";
 import { toMiniNotation } from "../lib/codeGenerator";
 import { buildPatternCode } from "../lib/patternBuilder";
+import { SyntaxHighlight } from "./SyntaxHighlight";
 
 interface CodePreviewProps {
   project: Project;
@@ -50,7 +51,11 @@ export function CodePreview({ project }: CodePreviewProps) {
         </button>
       </div>
       <pre className="code-preview-code">
-        {code || "// Add tracks and toggle steps to see code here"}
+        {code ? (
+          <SyntaxHighlight code={code} />
+        ) : (
+          "// Add tracks and toggle steps to see code here"
+        )}
       </pre>
     </div>
   );

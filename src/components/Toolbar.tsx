@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react";
 import { PRESETS } from "../lib/presets";
 
 interface ToolbarProps {
@@ -53,6 +54,31 @@ export function Toolbar({
   onThemeChange,
   onHelp,
 }: ToolbarProps) {
+  const tapTimesRef = useRef<number[]>([]);
+
+  const handleTapTempo = useCallback(() => {
+    const now = performance.now();
+    const taps = tapTimesRef.current;
+    // Reset if last tap was > 2 seconds ago
+    if (taps.length > 0 && now - taps[taps.length - 1] > 2000) {
+      taps.length = 0;
+    }
+    taps.push(now);
+    // Keep last 8 taps
+    if (taps.length > 8) taps.shift();
+    if (taps.length >= 2) {
+      const intervals: number[] = [];
+      for (let i = 1; i < taps.length; i++) {
+        intervals.push(taps[i] - taps[i - 1]);
+      }
+      const avgMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const newBpm = Math.round(60000 / avgMs);
+      if (newBpm >= 30 && newBpm <= 300) {
+        onBpmChange(newBpm);
+      }
+    }
+  }, [onBpmChange]);
+
   return (
     <div className="toolbar">
       <div className="toolbar-group">
@@ -113,6 +139,13 @@ export function Toolbar({
           value={bpm}
           onChange={(e) => onBpmChange(Number(e.target.value))}
         />
+        <button
+          className="toolbar-btn action-btn tap-tempo-btn"
+          onClick={handleTapTempo}
+          title="Tap to set BPM"
+        >
+          TAP
+        </button>
       </div>
 
       <div className="toolbar-group">
@@ -211,6 +244,8 @@ export function Toolbar({
           <option value="synthwave">🌌 Synthwave</option>
           <option value="terminal">💚 Terminal</option>
           <option value="sunset">🌅 Sunset</option>
+          <option value="dark">🌑 Dark</option>
+          <option value="light">☀️ Light</option>
         </select>
         <button
           className="toolbar-btn action-btn help-btn"
@@ -219,6 +254,15 @@ export function Toolbar({
         >
           ?
         </button>
+        <a
+          className="toolbar-btn action-btn bug-report-link"
+          href="https://github.com/vargamateistvan/strudel-soundboard/issues"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Report a bug"
+        >
+          🐛
+        </a>
       </div>
     </div>
   );

@@ -238,6 +238,7 @@ export default function App() {
             onReorderTracks={tracks.reorderTracks}
             onDuplicateTrack={tracks.duplicateTrack}
             onSetVelocity={tracks.setVelocity}
+            onSetProbability={tracks.setProbability}
             onSetEffects={tracks.setEffects}
             onSetModifiers={tracks.setModifiers}
             onAddPresetTracks={tracks.addPresetTracks}

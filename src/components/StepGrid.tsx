@@ -15,21 +15,25 @@ interface StepGridProps {
   track: Track;
   color: string;
   currentStep: number;
+  polyrhythmMarkers?: Set<number>;
   onToggleStep: (row: number, col: number) => void;
   onSetStep: (row: number, col: number, active: boolean) => void;
   onRemoveDrumRow: (rowIndex: number) => void;
   onPreviewRow: (rowLabel: string) => void;
   onSetVelocity: (row: number, col: number, velocity: number) => void;
+  onSetProbability: (row: number, col: number, probability: number) => void;
 }
 
 export function StepGrid({
   track,
   color,
   currentStep,
+  polyrhythmMarkers,
   onSetStep,
   onRemoveDrumRow,
   onPreviewRow,
   onSetVelocity,
+  onSetProbability,
 }: StepGridProps) {
   const stepCount = track.steps[0]?.length ?? 16;
   const rowCount = track.rows.length;
@@ -101,11 +105,22 @@ export function StepGrid({
       if (!step?.active) return;
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.1 : -0.1;
-      const newVel =
-        Math.round(Math.max(0.1, Math.min(1, step.velocity + delta)) * 10) / 10;
-      if (newVel !== step.velocity) onSetVelocity(row, col, newVel);
+
+      if (e.altKey) {
+        // Alt + scroll: adjust probability
+        const curProb = step.probability ?? 1;
+        const newProb =
+          Math.round(Math.max(0.1, Math.min(1, curProb + delta)) * 10) / 10;
+        if (newProb !== curProb) onSetProbability(row, col, newProb);
+      } else {
+        // Normal scroll: adjust velocity
+        const newVel =
+          Math.round(Math.max(0.1, Math.min(1, step.velocity + delta)) * 10) /
+          10;
+        if (newVel !== step.velocity) onSetVelocity(row, col, newVel);
+      }
     },
-    [track.steps, onSetVelocity],
+    [track.steps, onSetVelocity, onSetProbability],
   );
 
   // Compute which notes have any active steps (for piano keyboard highlights)
@@ -165,41 +180,51 @@ export function StepGrid({
                 )}
               </div>
               <div className="step-cells">
-                {track.steps[rowIdx]?.map((step, colIdx) => (
-                  <button
-                    key={colIdx}
-                    data-row={rowIdx}
-                    data-col={colIdx}
-                    tabIndex={rowIdx === 0 && colIdx === 0 ? 0 : -1}
-                    className={[
-                      "step-cell",
-                      step.active ? "step-active" : "",
-                      colIdx === currentStep ? "step-current" : "",
-                      colIdx % 4 === 0 ? "step-beat" : "",
-                      loopLen && colIdx >= loopLen ? "step-outside-loop" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    style={
-                      step.active
-                        ? {
-                            backgroundColor: color,
-                            opacity: 0.3 + step.velocity * 0.7,
-                          }
-                        : undefined
-                    }
-                    onPointerDown={(e) => handlePointerDown(rowIdx, colIdx, e)}
-                    onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
-                    onKeyDown={(e) => handleKeyDown(rowIdx, colIdx, e)}
-                    onWheel={(e) => handleWheel(rowIdx, colIdx, e)}
-                    title={
-                      step.active
-                        ? `vel: ${Math.round(step.velocity * 100)}%`
-                        : undefined
-                    }
-                    aria-label={`${rowLabel} step ${colIdx + 1} ${step.active ? "on" : "off"}`}
-                  />
-                ))}
+                {track.steps[rowIdx]?.map((step, colIdx) => {
+                  const prob = step.probability ?? 1;
+                  const hasProbability = step.active && prob < 1;
+                  return (
+                    <button
+                      key={colIdx}
+                      data-row={rowIdx}
+                      data-col={colIdx}
+                      tabIndex={rowIdx === 0 && colIdx === 0 ? 0 : -1}
+                      className={[
+                        "step-cell",
+                        step.active ? "step-active" : "",
+                        colIdx === currentStep ? "step-current" : "",
+                        colIdx % 4 === 0 ? "step-beat" : "",
+                        loopLen && colIdx >= loopLen ? "step-outside-loop" : "",
+                        hasProbability ? "step-probability" : "",
+                        polyrhythmMarkers?.has(colIdx)
+                          ? "step-poly-marker"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      style={
+                        step.active
+                          ? {
+                              backgroundColor: color,
+                              opacity: 0.3 + step.velocity * 0.7,
+                            }
+                          : undefined
+                      }
+                      onPointerDown={(e) =>
+                        handlePointerDown(rowIdx, colIdx, e)
+                      }
+                      onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
+                      onKeyDown={(e) => handleKeyDown(rowIdx, colIdx, e)}
+                      onWheel={(e) => handleWheel(rowIdx, colIdx, e)}
+                      title={
+                        step.active
+                          ? `vel: ${Math.round(step.velocity * 100)}%${hasProbability ? ` | prob: ${Math.round(prob * 100)}%` : ""}`
+                          : undefined
+                      }
+                      aria-label={`${rowLabel} step ${colIdx + 1} ${step.active ? "on" : "off"}`}
+                    />
+                  );
+                })}
               </div>
             </div>
           );

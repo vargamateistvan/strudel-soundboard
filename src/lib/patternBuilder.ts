@@ -64,7 +64,11 @@ function buildDrumPattern(track: Track): string | null {
     if (!hasActive) continue;
 
     const drumName = track.rows[rowIdx];
-    const stepStrs = sliced.map((s) => (s.active ? drumName : "~"));
+    const stepStrs = sliced.map((s) => {
+      if (!s.active) return "~";
+      const prob = s.probability ?? 1;
+      return prob < 1 ? `${drumName}?${prob.toFixed(2)}` : drumName;
+    });
     const hasVelocity = sliced.some((s) => s.active && s.velocity !== 1);
     let rp = `s("${stepStrs.join(" ")}")`;
     if (hasVelocity) {
@@ -103,8 +107,11 @@ function buildMelodicPattern(track: Track): string | null {
   for (let col = 0; col < stepCount; col++) {
     const notesInStep: string[] = [];
     for (let rowIdx = 0; rowIdx < track.rows.length; rowIdx++) {
-      if (track.steps[rowIdx]?.[col]?.active) {
-        notesInStep.push(track.rows[rowIdx].toLowerCase());
+      const step = track.steps[rowIdx]?.[col];
+      if (step?.active) {
+        const note = track.rows[rowIdx].toLowerCase();
+        const prob = step.probability ?? 1;
+        notesInStep.push(prob < 1 ? `${note}?${prob.toFixed(2)}` : note);
       }
     }
     if (notesInStep.length === 0) {

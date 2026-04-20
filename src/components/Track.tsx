@@ -25,6 +25,8 @@ interface TrackProps {
   onRemoveDrumRow: (rowIndex: number) => void;
   onPreviewRow: (rowLabel: string) => void;
   onSetVelocity: (row: number, col: number, velocity: number) => void;
+  onSetProbability: (row: number, col: number, probability: number) => void;
+  polyrhythmMarkers?: Set<number>;
   onSetEffects: (effects: Partial<TrackEffects>) => void;
   onSetModifiers: (modifiers: Partial<TrackModifiers>) => void;
   onSetLoopLength: (loopLength: number | undefined) => void;
@@ -56,6 +58,8 @@ export function Track({
   onRemoveDrumRow,
   onPreviewRow,
   onSetVelocity,
+  onSetProbability,
+  polyrhythmMarkers,
   onSetEffects,
   onSetModifiers,
   onSetLoopLength,
@@ -118,6 +122,8 @@ export function Track({
         onRemoveDrumRow={onRemoveDrumRow}
         onPreviewRow={onPreviewRow}
         onSetVelocity={onSetVelocity}
+        onSetProbability={onSetProbability}
+        polyrhythmMarkers={polyrhythmMarkers}
       />
       <div className="insert-after-bar">
         <select

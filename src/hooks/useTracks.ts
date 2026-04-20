@@ -153,6 +153,13 @@ type Action =
   | { type: "CLEAR_TRACK"; trackId: string }
   | { type: "REVERSE_STEPS"; trackId: string }
   | { type: "PASTE_STEPS"; trackId: string; steps: Step[][] }
+  | {
+      type: "SET_PROBABILITY";
+      trackId: string;
+      row: number;
+      col: number;
+      probability: number;
+    }
   | { type: "UNDO" }
   | { type: "REDO" };
 
@@ -513,6 +520,24 @@ function reducer(state: Project, action: Action): Project {
         }),
       };
 
+    case "SET_PROBABILITY":
+      return {
+        ...state,
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          const newSteps = t.steps.map((row, ri) =>
+            ri === action.row
+              ? row.map((step, ci) =>
+                  ci === action.col
+                    ? { ...step, probability: action.probability }
+                    : step,
+                )
+              : row,
+          );
+          return { ...t, steps: newSteps };
+        }),
+      };
+
     default:
       return state;
   }
@@ -685,6 +710,13 @@ export function useTracks() {
     [],
   );
 
+  const setProbability = useCallback(
+    (trackId: string, row: number, col: number, probability: number) => {
+      dispatch({ type: "SET_PROBABILITY", trackId, row, col, probability });
+    },
+    [],
+  );
+
   const setEffects = useCallback(
     (trackId: string, effects: Partial<TrackEffects>) => {
       dispatch({ type: "SET_EFFECTS", trackId, effects });
@@ -792,6 +824,7 @@ export function useTracks() {
     reorderTracks,
     duplicateTrack,
     setVelocity,
+    setProbability,
     setEffects,
     setModifiers,
     setSwing,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Project } from "../types";
 import { toMiniNotation, toJavaScript } from "../lib/codeGenerator";
+import { SyntaxHighlight } from "./SyntaxHighlight";
 
 interface ExportModalProps {
   project: Project;
@@ -45,7 +46,9 @@ export function ExportModal({ project, onClose }: ExportModalProps) {
         </div>
 
         <div className="modal-body">
-          <pre className="code-block">{code}</pre>
+          <pre className="code-block">
+            <SyntaxHighlight code={code} />
+          </pre>
         </div>
 
         <div className="modal-footer">

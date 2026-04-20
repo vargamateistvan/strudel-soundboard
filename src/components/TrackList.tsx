@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type {
   Project,
   Track as TrackType,
@@ -38,6 +38,12 @@ interface TrackListProps {
     col: number,
     velocity: number,
   ) => void;
+  onSetProbability: (
+    trackId: string,
+    row: number,
+    col: number,
+    probability: number,
+  ) => void;
   onSetEffects: (trackId: string, effects: Partial<TrackEffects>) => void;
   onSetModifiers: (trackId: string, modifiers: Partial<TrackModifiers>) => void;
   onAddPresetTracks: (tracks: TrackType[]) => void;
@@ -73,6 +79,7 @@ export function TrackList({
   onReorderTracks,
   onDuplicateTrack,
   onSetVelocity,
+  onSetProbability,
   onSetEffects,
   onSetModifiers,
   onAddPresetTracks,
@@ -121,6 +128,33 @@ export function TrackList({
     setDragIdx(null);
     setOverIdx(null);
   }, []);
+
+  // Compute polyrhythm alignment markers: for each track, collect loop-restart
+  // positions of all OTHER tracks that have a different loop length.
+  const polyrhythmMarkersPerTrack = useMemo(() => {
+    const loopLengths = project.tracks.map(
+      (t) => t.loopLength ?? project.stepCount,
+    );
+    const uniqueLengths = new Set(loopLengths);
+    // Only compute if there are at least 2 different loop lengths
+    if (uniqueLengths.size < 2) return undefined;
+
+    return project.tracks.map((_, ti) => {
+      const myLen = loopLengths[ti];
+      const markers = new Set<number>();
+      for (let oi = 0; oi < loopLengths.length; oi++) {
+        if (oi === ti) continue;
+        const otherLen = loopLengths[oi];
+        if (otherLen === myLen) continue;
+        // Mark positions where the other track's loop restarts
+        for (let pos = otherLen; pos < project.stepCount; pos += otherLen) {
+          markers.add(pos);
+        }
+      }
+      return markers;
+    });
+  }, [project.tracks, project.stepCount]);
+
   return (
     <div className="track-list">
       {project.tracks.length === 0 && (
@@ -162,6 +196,10 @@ export function TrackList({
             onSetVelocity={(row, col, vel) =>
               onSetVelocity(track.id, row, col, vel)
             }
+            onSetProbability={(row, col, prob) =>
+              onSetProbability(track.id, row, col, prob)
+            }
+            polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
             onSetEffects={(fx) => onSetEffects(track.id, fx)}
             onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
             onSetLoopLength={(len) => onSetLoopLength(track.id, len)}

@@ -3,6 +3,7 @@ export type TrackType = "drums" | "melodic" | "piano" | "guitar";
 export interface Step {
   active: boolean;
   velocity: number;
+  probability?: number; // 0-1, 1 = always play (default)
 }
 
 export interface TrackEffects {
