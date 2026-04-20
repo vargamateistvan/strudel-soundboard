@@ -9,6 +9,7 @@ import { Visualizer } from "./Visualizer";
 import { ExportModal } from "./ExportModal";
 import { ImportModal } from "./ImportModal";
 import { SaveLoadModal } from "./SaveLoadModal";
+import { HelpModal } from "./HelpModal";
 import { useRecorder } from "../hooks/useRecorder";
 import { useAnalyser } from "../hooks/useAnalyser";
 import { Snackbar } from "./Snackbar";
@@ -22,6 +23,7 @@ export default function App() {
   const [showExport, setShowExport] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("strudel-sb-theme") || "synthwave",
@@ -207,6 +209,7 @@ export default function App() {
         onLoadPreset={tracks.importProject}
         theme={theme}
         onThemeChange={setTheme}
+        onHelp={() => setShowHelp(true)}
       />
 
       <div className="app-main">
@@ -281,6 +284,8 @@ export default function App() {
           onClose={() => setShowSaveLoad(false)}
         />
       )}
+
+      {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
       <Snackbar message={strudel.error} onClose={strudel.clearError} />
     </div>

@@ -2177,3 +2177,91 @@ select.add-track-btn option {
 .snackbar-close:hover {
   color: var(--text-primary, #e0d0ff);
 }
+
+/* ── Help Modal ── */
+
+.help-modal {
+  max-width: 640px;
+  max-height: 85vh;
+}
+
+.help-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  line-height: 1.6;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+}
+
+.help-section {
+  margin-bottom: 20px;
+}
+
+.help-section:last-child {
+  margin-bottom: 0;
+}
+
+.help-section h3 {
+  color: var(--neon-cyan);
+  font-size: 1rem;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.help-section p {
+  margin: 0 0 8px;
+}
+
+.help-section a {
+  color: var(--neon-pink);
+  text-decoration: none;
+}
+
+.help-section a:hover {
+  text-decoration: underline;
+}
+
+.help-section ol,
+.help-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.help-section li {
+  margin-bottom: 4px;
+}
+
+.help-section kbd {
+  background: var(--bg-tertiary, #1a1a2e);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: inherit;
+  font-size: 0.85em;
+  color: var(--neon-yellow, #ffe600);
+}
+
+.help-section code {
+  background: var(--bg-tertiary, #1a1a2e);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.88em;
+  color: var(--neon-cyan);
+}
+
+.help-shortcuts {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.help-shortcuts td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.help-shortcuts td:first-child {
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 16px;
+}

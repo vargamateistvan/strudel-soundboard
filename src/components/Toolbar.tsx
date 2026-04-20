@@ -24,6 +24,7 @@ interface ToolbarProps {
   onLoadPreset: (project: import("../types").Project) => void;
   theme: string;
   onThemeChange: (theme: string) => void;
+  onHelp: () => void;
 }
 
 export function Toolbar({
@@ -50,6 +51,7 @@ export function Toolbar({
   onLoadPreset,
   theme,
   onThemeChange,
+  onHelp,
 }: ToolbarProps) {
   return (
     <div className="toolbar">
@@ -212,7 +214,8 @@ export function Toolbar({
         </select>
         <button
           className="toolbar-btn action-btn help-btn"
-          title="Space: Play/Stop&#10;Ctrl+Z: Undo&#10;Ctrl+Shift+Z: Redo&#10;Ctrl+S: Save&#10;1-9: Mute/Unmute track&#10;Scroll on step: Velocity"
+          onClick={onHelp}
+          title="Help"
         >
           ?
         </button>
