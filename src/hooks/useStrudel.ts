@@ -38,7 +38,10 @@ async function ensureStrudel() {
       hushFn = mod.hush;
       getAudioContextFn = mod.getAudioContext;
       // Load default drum samples from tidal-drum-machines
-      await mod.samples("github:tidalcycles/dirt-samples");
+      // Use jsDelivr CDN instead of raw.githubusercontent.com to avoid CORS/PNA blocks on GitHub Pages
+      await mod.samples(
+        "https://cdn.jsdelivr.net/gh/tidalcycles/dirt-samples@main/strudel.json",
+      );
 
       // Inline piano samples (Salamander Grand Piano via GitHub — avoids CORS)
       await mod.samples(
