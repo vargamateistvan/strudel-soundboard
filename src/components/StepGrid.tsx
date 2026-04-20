@@ -125,7 +125,7 @@ export function StepGrid({
 
   // Compute which notes have any active steps (for piano keyboard highlights)
   const activeNotes = useMemo(() => {
-    if (track.type !== "piano" && track.type !== "guitar") return undefined;
+    if (track.type !== "piano") return undefined;
     const set = new Set<string>();
     track.rows.forEach((note, rowIdx) => {
       if (track.steps[rowIdx]?.some((s) => s.active)) {
@@ -144,10 +144,10 @@ export function StepGrid({
       role="grid"
     >
       <div
-        className={`step-grid${track.type === "piano" || track.type === "guitar" ? " piano-grid" : ""}`}
+        className={`step-grid${track.type === "piano" ? " piano-grid" : ""}`}
       >
         {track.rows.map((rowLabel, rowIdx) => {
-          const isPiano = track.type === "piano" || track.type === "guitar";
+          const isPiano = track.type === "piano";
           const blackKey = isPiano && isBlackKey(rowLabel);
           const cNote = isPiano && isCNote(rowLabel);
           const rowClasses = [
