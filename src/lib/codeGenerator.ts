@@ -1,4 +1,5 @@
-import type { Project, Track } from "../types";
+import type { Project, Track, TrackEffects, TrackModifiers } from "../types";
+import { DEFAULT_EFFECTS } from "../types";
 
 /**
  * Export project as Strudel mini-notation (pasteable into strudel.cc REPL)
@@ -51,6 +52,8 @@ function drumTrackMini(track: Track): string | null {
   let code = `s("${inner}")`;
   if (track.bank) code += `.bank("${track.bank}")`;
   if (track.volume !== 1) code += `.gain(${track.volume.toFixed(2)})`;
+  code += buildEffectsChain(track.effects);
+  if (track.modifiers) code += buildModifiersChain(track.modifiers);
   return code;
 }
 
@@ -74,6 +77,8 @@ function melodicTrackMini(track: Track): string | null {
 
   let code = `note("${stepNotes.join(" ")}").s("${track.sound}")`;
   if (track.volume !== 1) code += `.gain(${track.volume.toFixed(2)})`;
+  code += buildEffectsChain(track.effects);
+  if (track.modifiers) code += buildModifiersChain(track.modifiers);
   return code;
 }
 
@@ -105,4 +110,59 @@ export function toJavaScript(project: Project): string {
   <\/script>
 </body>
 </html>`;
+}
+
+function buildEffectsChain(fx: TrackEffects | undefined): string {
+  if (!fx) return "";
+  const d = DEFAULT_EFFECTS;
+  let chain = "";
+  if (fx.delay > 0) {
+    chain += `.delay(${fx.delay.toFixed(2)}).delaytime(${fx.delaytime.toFixed(2)})`;
+  }
+  if (fx.room > 0) {
+    chain += `.room(${fx.room.toFixed(2)})`;
+  }
+  if (fx.lpf < d.lpf) {
+    chain += `.lpf(${Math.round(fx.lpf)})`;
+  }
+  if ((fx.hpf ?? 20) > 20) {
+    chain += `.hpf(${Math.round(fx.hpf)})`;
+  }
+  if (fx.distort > 0) {
+    chain += `.distort(${fx.distort.toFixed(2)})`;
+  }
+  if (fx.crush > 0) {
+    chain += `.crush(${fx.crush})`;
+  }
+  if ((fx.pan ?? 0.5) !== 0.5) {
+    chain += `.pan(${fx.pan.toFixed(2)})`;
+  }
+  return chain;
+}
+
+function buildModifiersChain(mod: TrackModifiers): string {
+  let chain = "";
+  if (mod.reverse) {
+    chain += ".rev()";
+  }
+  if (mod.speed !== 1 && mod.speed > 0) {
+    if (mod.speed < 1) {
+      chain += `.slow(${(1 / mod.speed).toFixed(2)})`;
+    } else {
+      chain += `.fast(${mod.speed.toFixed(2)})`;
+    }
+  }
+  if (mod.probability < 1 && mod.probability >= 0) {
+    chain += `.degradeBy(${(1 - mod.probability).toFixed(2)})`;
+  }
+  if (mod.every) {
+    const inner =
+      mod.every.mod === "reverse"
+        ? "x => x.rev()"
+        : mod.every.mod === "double"
+          ? "x => x.fast(2)"
+          : "x => x.slow(2)";
+    chain += `.every(${mod.every.n}, ${inner})`;
+  }
+  return chain;
 }
