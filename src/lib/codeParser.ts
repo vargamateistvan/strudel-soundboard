@@ -22,14 +22,30 @@ export function fromMiniNotation(code: string): ParseResult {
     bpm = Math.round(cps * 60 * 4);
   }
 
-  // Extract stack contents or single pattern
+  // Extract setcpm (cycles per minute; 1 cycle = 4 beats)
+  const cpmMatch = code.match(/setcpm\(\s*([\d.]+)\s*\)/);
+  if (cpmMatch) {
+    bpm = Math.round(parseFloat(cpmMatch[1]) * 4);
+  }
+
+  // Extract stack contents, $: patterns, or single pattern
   let patternBodies: string[] = [];
   const stackMatch = code.match(/stack\(\s*([\s\S]*)\s*\)/);
+
+  // Check for $: multi-pattern syntax
+  const dollarPatterns = code.match(/(?:_?\$:\s*)((?:(?!\n_?\$:)[\s\S])*)/g);
+
   if (stackMatch) {
     patternBodies = splitTopLevel(stackMatch[1]);
+  } else if (dollarPatterns && dollarPatterns.length > 0) {
+    patternBodies = dollarPatterns.map((p) =>
+      p.replace(/^_?\$:\s*/, "").trim(),
+    );
   } else {
-    // Find all s("...") or note("...") calls outside of setcps
-    const cleaned = code.replace(/setcps\([^)]*\)\s*\n?/, "");
+    // Find all s("...") or note("...") calls outside of setcps/setcpm
+    const cleaned = code
+      .replace(/setcps\([^)]*\)\s*\n?/, "")
+      .replace(/setcpm\([^)]*\)\s*\n?/, "");
     if (cleaned.trim()) {
       patternBodies = [cleaned.trim()];
     }
@@ -105,9 +121,9 @@ export function autoImport(code: string): ParseResult {
 // --- Internal helpers ---
 
 function parseTrackPattern(pattern: string): Track | null {
-  // Detect drum vs melodic
+  // Detect drum vs melodic via s("...") or note("...").sound("...")/note("...").s("...")
   const sMatch = pattern.match(/^s\("([^"]+)"\)/);
-  const noteMatch = pattern.match(/^note\("([^"]+)"\)/);
+  const noteMatch = pattern.match(/^note\(["'`]([^"'`]+)["'`]\)/);
 
   if (sMatch) {
     return parseDrumTrack(pattern, sMatch[1]);
@@ -182,13 +198,17 @@ function parseDrumTrack(pattern: string, innerPattern: string): Track {
 }
 
 function parseMelodicTrack(pattern: string, notePattern: string): Track {
-  const soundMatch = pattern.match(/\.s\("([^"]+)"\)/);
+  // Support both .s("...") and .sound("...")
+  const soundMatch =
+    pattern.match(/\.s\("([^"]+)"\)/) ?? pattern.match(/\.sound\("([^"]+)"\)/);
   const gainMatch = pattern.match(/\.gain\(([\d.]+)\)/);
 
   const sound = soundMatch?.[1] ?? "triangle";
   const volume = gainMatch ? parseFloat(gainMatch[1]) : 1;
 
-  const tokens = notePattern.split(/\s+/);
+  // Strip mini-notation modifiers: *N, /N, @N, !N, <...>, [...] wrappers
+  const cleaned = stripMiniModifiers(notePattern);
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
   const allNotes = [...MELODIC_NOTES];
   const rows = allNotes;
 
@@ -233,10 +253,90 @@ function parseMelodicTrack(pattern: string, notePattern: string): Track {
   };
 }
 
+/**
+ * Normalize a Strudel note token to our internal format (e.g. "C4", "Eb3", "F#4").
+ * Handles: lowercase letters (c → C3), with octave (c4 → C4), sharps/flats,
+ * MIDI numbers (60 → C4), and enharmonic equivalents (d# → Eb).
+ */
 function normalizeNoteName(name: string): string {
-  // Capitalize first letter, handle sharp/flat
   if (!name) return name;
-  return name.charAt(0).toUpperCase() + name.slice(1);
+
+  // Strip mini-notation suffixes like @2, !3, *4, /2 from individual tokens
+  const cleaned = name.replace(/[*/@!]\d+$/, "");
+
+  // Check if it's a MIDI number
+  const midiNum = Number(cleaned);
+  if (!isNaN(midiNum) && midiNum >= 0 && midiNum <= 127) {
+    return midiToNoteName(midiNum);
+  }
+
+  // Letter note: match note letter, optional sharp/flat, optional octave
+  const noteMatch = cleaned.match(/^([a-gA-G])([#b]?)(\d?)$/);
+  if (!noteMatch) return cleaned;
+
+  const letter = noteMatch[1].toUpperCase();
+  const accidental = noteMatch[2];
+  const octave = noteMatch[3] || "3"; // Strudel default octave is 3
+
+  // Build raw note name
+  const rawNote = `${letter}${accidental}${octave}`;
+
+  // Map enharmonic equivalents to match our MELODIC_NOTES
+  return mapEnharmonic(rawNote);
+}
+
+/** Map of enharmonic equivalents to what MELODIC_NOTES uses */
+const ENHARMONIC_MAP: Record<string, string> = {
+  Db: "C#",
+  "D#": "Eb",
+  Gb: "F#",
+  "G#": "Ab",
+  "A#": "Bb",
+};
+
+function mapEnharmonic(note: string): string {
+  // Split into name + octave
+  const match = note.match(/^([A-G][#b]?)(\d+)$/);
+  if (!match) return note;
+  const [, name, octave] = match;
+  const mapped = ENHARMONIC_MAP[name];
+  return mapped ? `${mapped}${octave}` : note;
+}
+
+/** Convert MIDI note number to note name (e.g. 60 → C4) */
+const NOTE_NAMES = [
+  "C",
+  "C#",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B",
+];
+function midiToNoteName(midi: number): string {
+  const octave = Math.floor(midi / 12) - 1;
+  const noteIdx = midi % 12;
+  return `${NOTE_NAMES[noteIdx]}${octave}`;
+}
+
+/**
+ * Strip mini-notation modifiers that aren't note data:
+ * angle brackets <...>, repetition *N, slow /N, elongate @N, replicate !N
+ */
+function stripMiniModifiers(pattern: string): string {
+  let result = pattern;
+  // Remove angle brackets (alternation): <a b c> → a b c
+  result = result.replace(/<([^>]+)>/g, "$1");
+  // Remove square bracket wrappers but keep contents: [a b] → a b
+  result = result.replace(/\[([^\]]+)\]/g, "$1");
+  // Remove repetition/speed/elongate/replicate suffixes on groups
+  result = result.replace(/[*/@!]\d+/g, "");
+  return result;
 }
 
 /**
