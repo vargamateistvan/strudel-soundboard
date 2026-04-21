@@ -433,9 +433,24 @@ function reducer(state: Project, action: Action): Project {
     case "SET_LOOP_LENGTH":
       return {
         ...state,
-        tracks: state.tracks.map((t) =>
-          t.id === action.trackId ? { ...t, loopLength: action.loopLength } : t,
-        ),
+        tracks: state.tracks.map((t) => {
+          if (t.id !== action.trackId) return t;
+          const newLen = action.loopLength ?? state.stepCount;
+          return {
+            ...t,
+            loopLength: action.loopLength,
+            steps: t.steps.map((row) => {
+              if (row.length >= newLen) return row.slice(0, newLen);
+              return [
+                ...row,
+                ...Array.from({ length: newLen - row.length }, () => ({
+                  active: false,
+                  velocity: 1,
+                })),
+              ];
+            }),
+          };
+        }),
       };
 
     case "SHIFT_PATTERN":

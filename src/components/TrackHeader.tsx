@@ -227,13 +227,11 @@ export function TrackHeader({
           data-tooltip="Loop length"
         >
           <option value="">🔁 All</option>
-          {[4, 8, 12, 16, 24, 32, 48, 64, 128]
-            .filter((n) => n <= stepCount)
-            .map((n) => (
-              <option key={n} value={n}>
-                🔁 {n}
-              </option>
-            ))}
+          {[4, 8, 12, 16, 24, 32, 48, 64, 128].map((n) => (
+            <option key={n} value={n}>
+              🔁 {n}
+            </option>
+          ))}
         </select>
       </div>
 

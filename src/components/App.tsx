@@ -118,20 +118,25 @@ export default function App() {
   }, [tracks.project]); // intentionally omit strudel to avoid loop
 
   // Step position indicator using interval synced to BPM
+  const stepRef = useRef(0);
   useEffect(() => {
     if (!strudel.isPlaying) {
       setCurrentStep(-1);
+      stepRef.current = 0;
       return;
     }
 
     const msPerStep =
       (60 / tracks.project.bpm) * (4 / tracks.project.stepCount) * 1000;
-    let step = 0;
-    setCurrentStep(0);
+    // When step count changes, clamp the current step to stay in bounds
+    if (stepRef.current >= tracks.project.stepCount) {
+      stepRef.current = stepRef.current % tracks.project.stepCount;
+    }
+    setCurrentStep(stepRef.current);
 
     const interval = setInterval(() => {
-      step = (step + 1) % tracks.project.stepCount;
-      setCurrentStep(step);
+      stepRef.current = (stepRef.current + 1) % tracks.project.stepCount;
+      setCurrentStep(stepRef.current);
     }, msPerStep);
 
     return () => clearInterval(interval);

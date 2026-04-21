@@ -35,9 +35,10 @@ export function StepGrid({
   onSetVelocity,
   onSetProbability,
 }: StepGridProps) {
-  const stepCount = track.steps[0]?.length ?? 16;
+  const totalSteps = track.steps[0]?.length ?? 16;
+  const visibleSteps = track.loopLength ?? totalSteps;
   const rowCount = track.rows.length;
-  const loopLen = track.loopLength;
+  const trackCurrentStep = currentStep >= 0 ? currentStep % visibleSteps : -1;
   const [painting, setPainting] = useState<boolean | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +54,7 @@ export function StepGrid({
       const { key } = e;
       let handled = true;
       if (key === "ArrowRight")
-        focusCell(row, Math.min(col + 1, stepCount - 1));
+        focusCell(row, Math.min(col + 1, visibleSteps - 1));
       else if (key === "ArrowLeft") focusCell(row, Math.max(col - 1, 0));
       else if (key === "ArrowDown")
         focusCell(Math.min(row + 1, rowCount - 1), col);
@@ -73,7 +74,7 @@ export function StepGrid({
       }
       if (handled) e.stopPropagation();
     },
-    [stepCount, rowCount, track.steps, onSetStep, onSetVelocity, focusCell],
+    [visibleSteps, rowCount, track.steps, onSetStep, onSetVelocity, focusCell],
   );
 
   const handlePointerDown = useCallback(
@@ -180,51 +181,54 @@ export function StepGrid({
                 )}
               </div>
               <div className="step-cells">
-                {track.steps[rowIdx]?.map((step, colIdx) => {
-                  const prob = step.probability ?? 1;
-                  const hasProbability = step.active && prob < 1;
-                  return (
-                    <button
-                      key={colIdx}
-                      data-row={rowIdx}
-                      data-col={colIdx}
-                      tabIndex={rowIdx === 0 && colIdx === 0 ? 0 : -1}
-                      className={[
-                        "step-cell",
-                        step.active ? "step-active" : "",
-                        colIdx === currentStep ? "step-current" : "",
-                        colIdx % 4 === 0 ? "step-beat" : "",
-                        loopLen && colIdx >= loopLen ? "step-outside-loop" : "",
-                        hasProbability ? "step-probability" : "",
-                        polyrhythmMarkers?.has(colIdx)
-                          ? "step-poly-marker"
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      style={
-                        step.active
-                          ? {
-                              backgroundColor: color,
-                              opacity: 0.3 + step.velocity * 0.7,
-                            }
-                          : undefined
-                      }
-                      onPointerDown={(e) =>
-                        handlePointerDown(rowIdx, colIdx, e)
-                      }
-                      onPointerEnter={() => handlePointerEnter(rowIdx, colIdx)}
-                      onKeyDown={(e) => handleKeyDown(rowIdx, colIdx, e)}
-                      onWheel={(e) => handleWheel(rowIdx, colIdx, e)}
-                      title={
-                        step.active
-                          ? `vel: ${Math.round(step.velocity * 100)}%${hasProbability ? ` | prob: ${Math.round(prob * 100)}%` : ""}`
-                          : undefined
-                      }
-                      aria-label={`${rowLabel} step ${colIdx + 1} ${step.active ? "on" : "off"}`}
-                    />
-                  );
-                })}
+                {track.steps[rowIdx]
+                  ?.slice(0, visibleSteps)
+                  .map((step, colIdx) => {
+                    const prob = step.probability ?? 1;
+                    const hasProbability = step.active && prob < 1;
+                    return (
+                      <button
+                        key={colIdx}
+                        data-row={rowIdx}
+                        data-col={colIdx}
+                        tabIndex={rowIdx === 0 && colIdx === 0 ? 0 : -1}
+                        className={[
+                          "step-cell",
+                          step.active ? "step-active" : "",
+                          colIdx === trackCurrentStep ? "step-current" : "",
+                          colIdx % 4 === 0 ? "step-beat" : "",
+                          hasProbability ? "step-probability" : "",
+                          polyrhythmMarkers?.has(colIdx)
+                            ? "step-poly-marker"
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        style={
+                          step.active
+                            ? {
+                                backgroundColor: color,
+                                opacity: 0.3 + step.velocity * 0.7,
+                              }
+                            : undefined
+                        }
+                        onPointerDown={(e) =>
+                          handlePointerDown(rowIdx, colIdx, e)
+                        }
+                        onPointerEnter={() =>
+                          handlePointerEnter(rowIdx, colIdx)
+                        }
+                        onKeyDown={(e) => handleKeyDown(rowIdx, colIdx, e)}
+                        onWheel={(e) => handleWheel(rowIdx, colIdx, e)}
+                        title={
+                          step.active
+                            ? `vel: ${Math.round(step.velocity * 100)}%${hasProbability ? ` | prob: ${Math.round(prob * 100)}%` : ""}`
+                            : undefined
+                        }
+                        aria-label={`${rowLabel} step ${colIdx + 1} ${step.active ? "on" : "off"}`}
+                      />
+                    );
+                  })}
               </div>
             </div>
           );
@@ -235,8 +239,8 @@ export function StepGrid({
       <div className="step-numbers">
         <div className="row-label" />
         <div className="step-cells">
-          {Array.from({ length: stepCount }, (_, i) => {
-            const showLabel = stepCount <= 32 || i % 4 === 0;
+          {Array.from({ length: visibleSteps }, (_, i) => {
+            const showLabel = visibleSteps <= 32 || i % 4 === 0;
             return (
               <div
                 key={i}

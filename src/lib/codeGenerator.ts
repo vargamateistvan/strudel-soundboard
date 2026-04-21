@@ -35,12 +35,15 @@ function trackToMiniNotation(track: Track): string | null {
 
 function drumTrackMini(track: Track): string | null {
   const rowPatterns: string[] = [];
+  const len = track.loopLength ?? track.steps[0]?.length ?? 0;
 
   for (let rowIdx = 0; rowIdx < track.rows.length; rowIdx++) {
     const row = track.steps[rowIdx];
-    if (!row || !row.some((s) => s.active)) continue;
+    if (!row) continue;
+    const sliced = row.slice(0, len);
+    if (!sliced.some((s) => s.active)) continue;
     const drumName = track.rows[rowIdx];
-    const steps = row.map((s) => (s.active ? drumName : "~")).join(" ");
+    const steps = sliced.map((s) => (s.active ? drumName : "~")).join(" ");
     rowPatterns.push(steps);
   }
 
@@ -58,7 +61,7 @@ function drumTrackMini(track: Track): string | null {
 }
 
 function melodicTrackMini(track: Track): string | null {
-  const stepCount = track.steps[0]?.length ?? 0;
+  const stepCount = track.loopLength ?? track.steps[0]?.length ?? 0;
   const stepNotes: string[] = [];
 
   for (let col = 0; col < stepCount; col++) {
