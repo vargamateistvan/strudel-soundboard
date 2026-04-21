@@ -6,6 +6,8 @@ import type {
   TrackModifiers,
 } from "../types";
 import { Track } from "./Track";
+import { TrackHeader } from "./TrackHeader";
+import { StepGrid } from "./StepGrid";
 import { getTrackColor } from "../lib/constants";
 import { PRESETS } from "../lib/presets";
 
@@ -247,7 +249,7 @@ export function TrackList({
           );
         }
 
-        // Chained group — render side-by-side
+        // Chained group — headers stacked on left, step grids side-by-side on right
         const chainUsedSteps = group.reduce(
           (sum, t) => sum + (t.loopLength ?? project.stepCount),
           0,
@@ -263,73 +265,114 @@ export function TrackList({
         }
 
         return (
-          <div key={rootTrack.id} className="chain-group">
-            {group.map((track, groupIdx) => {
-              const idx = project.tracks.indexOf(track);
-              const isLast = groupIdx === group.length - 1;
-              const trackLen = track.loopLength ?? project.stepCount;
-              const trackOffset = offsets[groupIdx];
-              // Only show beat indicator when this track is the one currently playing
-              let chainStep = -1;
-              if (currentStep >= 0) {
-                const cyclePos = currentStep % chainUsedSteps;
-                if (
-                  cyclePos >= trackOffset &&
-                  cyclePos < trackOffset + trackLen
-                ) {
-                  chainStep = cyclePos - trackOffset;
+          <div
+            key={rootTrack.id}
+            className="chain-group"
+            style={
+              { "--track-color": getTrackColor(rootIdx) } as React.CSSProperties
+            }
+          >
+            {/* Left: stacked headers */}
+            <div className="chain-headers">
+              {group.map((track, groupIdx) => {
+                const idx = project.tracks.indexOf(track);
+                const isLast = groupIdx === group.length - 1;
+                return (
+                  <div
+                    key={track.id}
+                    className="chain-header-item"
+                    style={
+                      {
+                        "--track-color": getTrackColor(idx),
+                      } as React.CSSProperties
+                    }
+                  >
+                    <TrackHeader
+                      track={track}
+                      stepCount={project.stepCount}
+                      onSetSound={(sound) => onSetSound(track.id, sound)}
+                      onSetBank={(bank) => onSetBank(track.id, bank)}
+                      onToggleMute={() => onToggleMute(track.id)}
+                      onToggleSolo={() => onToggleSolo(track.id)}
+                      onSetVolume={(vol) => onSetVolume(track.id, vol)}
+                      onRemove={() => onRemoveTrack(track.id)}
+                      onDuplicate={() => onDuplicateTrack(track.id)}
+                      onSetName={(name) => onSetTrackName(track.id, name)}
+                      onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
+                      onSetEffects={(fx) => onSetEffects(track.id, fx)}
+                      onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
+                      onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
+                      onCopySteps={() => onCopySteps(track.id)}
+                      onPasteSteps={() => onPasteSteps(track.id)}
+                      onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
+                      onRandomizePattern={(density) =>
+                        onRandomizePattern(track.id, density)
+                      }
+                      onClearTrack={() => onClearTrack(track.id)}
+                      onReverseSteps={() => onReverseSteps(track.id)}
+                      onInsertAfter={(type, steps) =>
+                        onInsertTrackAfter(track.id, type, steps)
+                      }
+                      chainRemainingSteps={isLast ? chainRemaining : 0}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            {/* Right: step grids side-by-side */}
+            <div className="chain-grids">
+              {group.map((track, groupIdx) => {
+                const idx = project.tracks.indexOf(track);
+                const trackLen = track.loopLength ?? project.stepCount;
+                const trackOffset = offsets[groupIdx];
+                let chainStep = -1;
+                if (currentStep >= 0) {
+                  const cyclePos = currentStep % chainUsedSteps;
+                  if (
+                    cyclePos >= trackOffset &&
+                    cyclePos < trackOffset + trackLen
+                  ) {
+                    chainStep = cyclePos - trackOffset;
+                  }
                 }
-              }
-              return (
-                <div key={track.id} className="chain-track-wrapper">
-                  <Track
-                    track={track}
-                    color={getTrackColor(idx)}
-                    currentStep={chainStep}
-                    stepCount={project.stepCount}
-                    onToggleStep={(row, col) =>
-                      onToggleStep(track.id, row, col)
+                return (
+                  <div
+                    key={track.id}
+                    className="chain-grid-item"
+                    style={
+                      {
+                        "--track-color": getTrackColor(idx),
+                      } as React.CSSProperties
                     }
-                    onSetStep={(row, col, active) =>
-                      onSetStep(track.id, row, col, active)
-                    }
-                    onSetSound={(sound) => onSetSound(track.id, sound)}
-                    onSetBank={(bank) => onSetBank(track.id, bank)}
-                    onToggleMute={() => onToggleMute(track.id)}
-                    onToggleSolo={() => onToggleSolo(track.id)}
-                    onSetVolume={(vol) => onSetVolume(track.id, vol)}
-                    onRemove={() => onRemoveTrack(track.id)}
-                    onSetName={(name) => onSetTrackName(track.id, name)}
-                    onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
-                    onRemoveDrumRow={(idx) => onRemoveDrumRow(track.id, idx)}
-                    onPreviewRow={(rowLabel) =>
-                      onPreviewRow(track.id, rowLabel)
-                    }
-                    onDuplicate={() => onDuplicateTrack(track.id)}
-                    onSetVelocity={(row, col, vel) =>
-                      onSetVelocity(track.id, row, col, vel)
-                    }
-                    onSetProbability={(row, col, prob) =>
-                      onSetProbability(track.id, row, col, prob)
-                    }
-                    polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
-                    onSetEffects={(fx) => onSetEffects(track.id, fx)}
-                    onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
-                    onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
-                    onCopySteps={() => onCopySteps(track.id)}
-                    onPasteSteps={() => onPasteSteps(track.id)}
-                    onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
-                    onRandomizePattern={(density) =>
-                      onRandomizePattern(track.id, density)
-                    }
-                    onClearTrack={() => onClearTrack(track.id)}
-                    onReverseSteps={() => onReverseSteps(track.id)}
-                    onInsertAfter={(type) => onInsertTrackAfter(track.id, type)}
-                    chainRemainingSteps={isLast ? chainRemaining : 0}
-                  />
-                </div>
-              );
-            })}
+                  >
+                    <StepGrid
+                      track={track}
+                      color={getTrackColor(idx)}
+                      currentStep={chainStep}
+                      onToggleStep={(row, col) =>
+                        onToggleStep(track.id, row, col)
+                      }
+                      onSetStep={(row, col, active) =>
+                        onSetStep(track.id, row, col, active)
+                      }
+                      onRemoveDrumRow={(ridx) =>
+                        onRemoveDrumRow(track.id, ridx)
+                      }
+                      onPreviewRow={(rowLabel) =>
+                        onPreviewRow(track.id, rowLabel)
+                      }
+                      onSetVelocity={(row, col, vel) =>
+                        onSetVelocity(track.id, row, col, vel)
+                      }
+                      onSetProbability={(row, col, prob) =>
+                        onSetProbability(track.id, row, col, prob)
+                      }
+                      polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })}

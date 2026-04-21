@@ -220,6 +220,9 @@ body::after {
   box-shadow: var(--glow-pink), inset 0 0 30px rgba(255, 45, 226, 0.05);
   margin-bottom: 12px;
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .toolbar-group {
@@ -411,28 +414,73 @@ body::after {
   gap: 10px;
 }
 
-/* Chained tracks rendered side-by-side */
+/* Chained tracks: headers stacked left, grids side-by-side right */
 .chain-group {
   display: flex;
   flex-direction: row;
-  gap: 0;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-left: none;
+  box-shadow: 0 0 8px rgba(255, 45, 226, 0.1);
+  overflow: visible;
+  position: relative;
 }
 
-.chain-group .chain-track-wrapper {
+.chain-headers {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  width: 180px;
+  border-right: 2px solid var(--border);
+}
+
+.chain-header-item {
+  flex: 1;
+  border-left: 5px solid var(--track-color, var(--neon-pink));
+  position: relative;
+}
+
+.chain-header-item + .chain-header-item {
+  border-top: 1px dashed var(--border);
+}
+
+/* Override track-header width when inside a chain — it fills the chain-header-item */
+.chain-header-item .track-header {
+  width: 100%;
+  min-width: 0;
+  border-right: none;
+}
+
+.chain-grids {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.chain-grid-item {
   flex: none;
+  border-left: 2px dashed var(--border);
+  position: relative;
 }
 
-.chain-group .track {
-  border-radius: 0;
+.chain-grid-item:first-child {
+  border-left: none;
 }
 
-.chain-group .chain-track-wrapper:first-child .track {
-  border-radius: 8px 0 0 8px;
-}
-
-.chain-group .chain-track-wrapper:last-child .track {
-  border-radius: 0 8px 8px 0;
-  border-left: 2px dashed var(--border-color);
+/* Chain link indicator between headers */
+.chain-header-item + .chain-header-item::before {
+  content: "⛓";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.5rem;
+  color: var(--neon-purple);
+  text-shadow: 0 0 6px rgba(191, 0, 255, 0.5);
+  z-index: 2;
+  line-height: 1;
 }
 
 .empty-state {
