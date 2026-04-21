@@ -180,7 +180,7 @@ export function TrackHeader({
           data-tooltip={track.muted ? "Unmute" : "Mute"}
           aria-label={track.muted ? "Unmute" : "Mute"}
         >
-          M
+          {track.muted ? "🔇" : "🔊"}
         </button>
         <button
           className={`toggle-btn solo-btn ${track.solo ? "active" : ""}`}
@@ -188,7 +188,7 @@ export function TrackHeader({
           data-tooltip={track.solo ? "Unsolo" : "Solo – only this track"}
           aria-label={track.solo ? "Unsolo" : "Solo"}
         >
-          S
+          🎧
         </button>
         <input
           type="range"
