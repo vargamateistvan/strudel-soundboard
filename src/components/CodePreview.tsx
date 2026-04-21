@@ -16,7 +16,7 @@ export function CodePreview({ project, onImport }: CodePreviewProps) {
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [parseError, setParseError] = useState("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const ignoreNextProjectRef = useRef(false);
 
   // Cleanup debounce timer on unmount

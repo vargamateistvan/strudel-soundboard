@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-// @ts-expect-error — loading lamejs source as raw string to avoid Vite CJS scope issues
 import lameAllSource from "lamejs/lame.all.js?raw";
 import {
   installAudioTap,
