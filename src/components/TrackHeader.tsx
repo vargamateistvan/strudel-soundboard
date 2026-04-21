@@ -32,6 +32,11 @@ interface TrackHeaderProps {
   onRandomizePattern: (density: number) => void;
   onClearTrack: () => void;
   onReverseSteps: () => void;
+  onInsertAfter: (
+    type: "drums" | "melodic" | "piano" | "guitar",
+    customStepCount?: number,
+  ) => void;
+  chainRemainingSteps?: number;
 }
 
 export function TrackHeader({
@@ -55,6 +60,8 @@ export function TrackHeader({
   onRandomizePattern,
   onClearTrack,
   onReverseSteps,
+  onInsertAfter,
+  chainRemainingSteps,
 }: TrackHeaderProps) {
   const [showFx, setShowFx] = useState(false);
   const [showMod, setShowMod] = useState(false);
@@ -233,6 +240,56 @@ export function TrackHeader({
             </option>
           ))}
         </select>
+        {(() => {
+          const remaining =
+            chainRemainingSteps ??
+            (track.loopLength != null ? stepCount - track.loopLength : 0);
+          if (remaining <= 0) return null;
+
+          // Build step count options: remaining, 2/3, 1/3 (only whole numbers > 0)
+          const stepOptions: number[] = [];
+          for (const frac of [1, 2 / 3, 1 / 3]) {
+            const val = Math.round(remaining * frac);
+            if (val > 0 && !stepOptions.includes(val)) stepOptions.push(val);
+          }
+
+          const trackTypes = [
+            { value: "drums", label: "🥁 Drum" },
+            { value: "melodic", label: "🎹 Synth" },
+            { value: "piano", label: "🎵 Piano" },
+            { value: "guitar", label: "🎸 Guitar" },
+          ];
+
+          return (
+            <select
+              className="track-select add-after-select"
+              value=""
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const [type, steps] = e.target.value.split(":");
+                onInsertAfter(
+                  type as "drums" | "melodic" | "piano" | "guitar",
+                  Number(steps),
+                );
+              }}
+              data-tooltip={`Add track after (${remaining} steps left)`}
+            >
+              <option value="">+ Add after ({remaining} steps left)</option>
+              {stepOptions.map((s) => (
+                <optgroup
+                  key={s}
+                  label={`${s} steps${s === remaining ? " (all)" : ""}`}
+                >
+                  {trackTypes.map((t) => (
+                    <option key={`${t.value}:${s}`} value={`${t.value}:${s}`}>
+                      {t.label} ({s} steps)
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          );
+        })()}
       </div>
 
       {showFx && (

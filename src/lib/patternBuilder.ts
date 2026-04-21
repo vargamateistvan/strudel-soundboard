@@ -3,7 +3,7 @@ import { DEFAULT_EFFECTS } from "../types";
 
 /**
  * Converts the project state into a Strudel code string for live playback.
- * Uses stack() to layer all unmuted tracks.
+ * Uses stack() to layer all unmuted tracks, and cat() for chained tracks.
  */
 export function buildPatternCode(project: Project): string {
   const { bpm, tracks } = project;
@@ -15,16 +15,40 @@ export function buildPatternCode(project: Project): string {
 
   if (activeTracks.length === 0) return "";
 
-  const patterns = activeTracks
-    .map((t) => buildTrackPattern(t))
-    .filter(Boolean);
-  if (patterns.length === 0) return "";
+  // Group into chains (sequential) and standalone
+  const chainedIds = new Set(
+    activeTracks.filter((t) => t.chainedWith).map((t) => t.id),
+  );
+  const patternCodes: string[] = [];
+
+  for (const track of activeTracks) {
+    if (chainedIds.has(track.id)) continue; // handled with its chain root
+    const children = activeTracks.filter((t) => t.chainedWith === track.id);
+    if (children.length > 0) {
+      const group = [track, ...children];
+      const groupPatterns = group
+        .map((t) => buildTrackPattern(t))
+        .filter(Boolean) as string[];
+      if (groupPatterns.length > 0) {
+        if (groupPatterns.length === 1) {
+          patternCodes.push(groupPatterns[0]);
+        } else {
+          patternCodes.push(`cat(\n    ${groupPatterns.join(",\n    ")}\n  )`);
+        }
+      }
+    } else {
+      const code = buildTrackPattern(track);
+      if (code) patternCodes.push(code);
+    }
+  }
+
+  if (patternCodes.length === 0) return "";
 
   const lines = [`setcps(${cps})`];
-  if (patterns.length === 1) {
-    lines.push(patterns[0]!);
+  if (patternCodes.length === 1) {
+    lines.push(patternCodes[0]!);
   } else {
-    lines.push(`stack(\n  ${patterns.join(",\n  ")}\n)`);
+    lines.push(`stack(\n  ${patternCodes.join(",\n  ")}\n)`);
   }
 
   // Apply swing

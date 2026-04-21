@@ -146,6 +146,7 @@ type Action =
       type: "INSERT_TRACK_AFTER";
       afterTrackId: string;
       trackType: "drums" | "melodic" | "piano" | "guitar";
+      customStepCount?: number;
     }
   | { type: "SET_LOOP_LENGTH"; trackId: string; loopLength: number | undefined }
   | { type: "SHIFT_PATTERN"; trackId: string; direction: 1 | -1 }
@@ -177,11 +178,17 @@ function reducer(state: Project, action: Action): Project {
       return { ...state, tracks: [...state.tracks, track] };
     }
 
-    case "REMOVE_TRACK":
-      return {
-        ...state,
-        tracks: state.tracks.filter((t) => t.id !== action.trackId),
-      };
+    case "REMOVE_TRACK": {
+      // When removing a root track, unchain any tracks chained to it
+      const remaining = state.tracks
+        .filter((t) => t.id !== action.trackId)
+        .map((t) =>
+          t.chainedWith === action.trackId
+            ? { ...t, chainedWith: undefined }
+            : t,
+        );
+      return { ...state, tracks: remaining };
+    }
 
     case "TOGGLE_STEP":
       return {
@@ -412,14 +419,32 @@ function reducer(state: Project, action: Action): Project {
       return { ...state, swing: action.swing };
 
     case "INSERT_TRACK_AFTER": {
+      const afterTrack = state.tracks.find((t) => t.id === action.afterTrackId);
+      // Calculate the chain root and total steps used in the chain
+      const chainRoot = afterTrack?.chainedWith ?? action.afterTrackId;
+      const rootTrack = state.tracks.find((t) => t.id === chainRoot);
+      const chainMembers = [
+        rootTrack,
+        ...state.tracks.filter((t) => t.chainedWith === chainRoot),
+      ].filter(Boolean) as typeof state.tracks;
+      const usedSteps = chainMembers.reduce(
+        (sum, t) => sum + (t.loopLength ?? state.stepCount),
+        0,
+      );
+      const remainingSteps = Math.max(1, state.stepCount - usedSteps);
+      const stepCount = action.customStepCount
+        ? Math.min(action.customStepCount, remainingSteps)
+        : remainingSteps;
       const newTrack =
         action.trackType === "drums"
-          ? createDrumTrack(state.stepCount, state.tracks)
+          ? createDrumTrack(stepCount, state.tracks)
           : action.trackType === "piano"
-            ? createPianoTrack(state.stepCount, state.tracks)
+            ? createPianoTrack(stepCount, state.tracks)
             : action.trackType === "guitar"
-              ? createGuitarTrack(state.stepCount, state.tracks)
-              : createMelodicTrack(state.stepCount, state.tracks);
+              ? createGuitarTrack(stepCount, state.tracks)
+              : createMelodicTrack(stepCount, state.tracks);
+      newTrack.loopLength = stepCount;
+      newTrack.chainedWith = chainRoot;
       const afterIdx = state.tracks.findIndex(
         (t) => t.id === action.afterTrackId,
       );
@@ -754,8 +779,14 @@ export function useTracks() {
     (
       afterTrackId: string,
       trackType: "drums" | "melodic" | "piano" | "guitar",
+      customStepCount?: number,
     ) => {
-      dispatch({ type: "INSERT_TRACK_AFTER", afterTrackId, trackType });
+      dispatch({
+        type: "INSERT_TRACK_AFTER",
+        afterTrackId,
+        trackType,
+        customStepCount,
+      });
     },
     [],
   );

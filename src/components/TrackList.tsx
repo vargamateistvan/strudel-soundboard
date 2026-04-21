@@ -50,6 +50,7 @@ interface TrackListProps {
   onInsertTrackAfter: (
     afterTrackId: string,
     type: "drums" | "melodic" | "piano" | "guitar",
+    customStepCount?: number,
   ) => void;
   onSetLoopLength: (trackId: string, loopLength: number | undefined) => void;
   onCopySteps: (trackId: string) => void;
@@ -155,6 +156,25 @@ export function TrackList({
     });
   }, [project.tracks, project.stepCount]);
 
+  // Group tracks into chain rows: root tracks and their chained children side-by-side
+  const chainGroups = useMemo(() => {
+    const groups: TrackType[][] = [];
+    const chainedIds = new Set(
+      project.tracks.filter((t) => t.chainedWith).map((t) => t.id),
+    );
+
+    for (const track of project.tracks) {
+      if (chainedIds.has(track.id)) continue; // skip chained children, they'll be added to their parent group
+      const group = [track];
+      // Find all tracks chained to this one
+      for (const t of project.tracks) {
+        if (t.chainedWith === track.id) group.push(t);
+      }
+      groups.push(group);
+    }
+    return groups;
+  }, [project.tracks]);
+
   return (
     <div className="track-list">
       {project.tracks.length === 0 && (
@@ -163,58 +183,156 @@ export function TrackList({
         </div>
       )}
 
-      {project.tracks.map((track, idx) => (
-        <div
-          key={track.id}
-          className={`track-drag-wrapper ${dragIdx === idx ? "dragging" : ""} ${overIdx === idx && dragIdx !== idx ? "drag-over" : ""}`}
-          draggable
-          onDragStart={(e) => handleDragStart(idx, e)}
-          onDragOver={(e) => handleDragOver(idx, e)}
-          onDrop={(e) => handleDrop(idx, e)}
-          onDragEnd={handleDragEnd}
-        >
-          <Track
-            track={track}
-            color={getTrackColor(idx)}
-            currentStep={currentStep}
-            stepCount={project.stepCount}
-            onToggleStep={(row, col) => onToggleStep(track.id, row, col)}
-            onSetStep={(row, col, active) =>
-              onSetStep(track.id, row, col, active)
-            }
-            onSetSound={(sound) => onSetSound(track.id, sound)}
-            onSetBank={(bank) => onSetBank(track.id, bank)}
-            onToggleMute={() => onToggleMute(track.id)}
-            onToggleSolo={() => onToggleSolo(track.id)}
-            onSetVolume={(vol) => onSetVolume(track.id, vol)}
-            onRemove={() => onRemoveTrack(track.id)}
-            onSetName={(name) => onSetTrackName(track.id, name)}
-            onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
-            onRemoveDrumRow={(idx) => onRemoveDrumRow(track.id, idx)}
-            onPreviewRow={(rowLabel) => onPreviewRow(track.id, rowLabel)}
-            onDuplicate={() => onDuplicateTrack(track.id)}
-            onSetVelocity={(row, col, vel) =>
-              onSetVelocity(track.id, row, col, vel)
-            }
-            onSetProbability={(row, col, prob) =>
-              onSetProbability(track.id, row, col, prob)
-            }
-            polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
-            onSetEffects={(fx) => onSetEffects(track.id, fx)}
-            onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
-            onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
-            onCopySteps={() => onCopySteps(track.id)}
-            onPasteSteps={() => onPasteSteps(track.id)}
-            onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
-            onRandomizePattern={(density) =>
-              onRandomizePattern(track.id, density)
-            }
-            onClearTrack={() => onClearTrack(track.id)}
-            onReverseSteps={() => onReverseSteps(track.id)}
-            onInsertAfter={(type) => onInsertTrackAfter(track.id, type)}
-          />
-        </div>
-      ))}
+      {chainGroups.map((group) => {
+        const rootTrack = group[0];
+        const rootIdx = project.tracks.indexOf(rootTrack);
+
+        if (group.length === 1) {
+          // Single track — render as before
+          const track = rootTrack;
+          const idx = rootIdx;
+          return (
+            <div
+              key={track.id}
+              className={`track-drag-wrapper ${dragIdx === idx ? "dragging" : ""} ${overIdx === idx && dragIdx !== idx ? "drag-over" : ""}`}
+              draggable
+              onDragStart={(e) => handleDragStart(idx, e)}
+              onDragOver={(e) => handleDragOver(idx, e)}
+              onDrop={(e) => handleDrop(idx, e)}
+              onDragEnd={handleDragEnd}
+            >
+              <Track
+                track={track}
+                color={getTrackColor(idx)}
+                currentStep={currentStep}
+                stepCount={project.stepCount}
+                onToggleStep={(row, col) => onToggleStep(track.id, row, col)}
+                onSetStep={(row, col, active) =>
+                  onSetStep(track.id, row, col, active)
+                }
+                onSetSound={(sound) => onSetSound(track.id, sound)}
+                onSetBank={(bank) => onSetBank(track.id, bank)}
+                onToggleMute={() => onToggleMute(track.id)}
+                onToggleSolo={() => onToggleSolo(track.id)}
+                onSetVolume={(vol) => onSetVolume(track.id, vol)}
+                onRemove={() => onRemoveTrack(track.id)}
+                onSetName={(name) => onSetTrackName(track.id, name)}
+                onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
+                onRemoveDrumRow={(idx) => onRemoveDrumRow(track.id, idx)}
+                onPreviewRow={(rowLabel) => onPreviewRow(track.id, rowLabel)}
+                onDuplicate={() => onDuplicateTrack(track.id)}
+                onSetVelocity={(row, col, vel) =>
+                  onSetVelocity(track.id, row, col, vel)
+                }
+                onSetProbability={(row, col, prob) =>
+                  onSetProbability(track.id, row, col, prob)
+                }
+                polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
+                onSetEffects={(fx) => onSetEffects(track.id, fx)}
+                onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
+                onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
+                onCopySteps={() => onCopySteps(track.id)}
+                onPasteSteps={() => onPasteSteps(track.id)}
+                onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
+                onRandomizePattern={(density) =>
+                  onRandomizePattern(track.id, density)
+                }
+                onClearTrack={() => onClearTrack(track.id)}
+                onReverseSteps={() => onReverseSteps(track.id)}
+                onInsertAfter={(type, steps) =>
+                  onInsertTrackAfter(track.id, type, steps)
+                }
+              />
+            </div>
+          );
+        }
+
+        // Chained group — render side-by-side
+        const chainUsedSteps = group.reduce(
+          (sum, t) => sum + (t.loopLength ?? project.stepCount),
+          0,
+        );
+        const chainRemaining = Math.max(0, project.stepCount - chainUsedSteps);
+
+        // Compute step offsets: each track plays after the previous finishes
+        const offsets: number[] = [];
+        let offset = 0;
+        for (const t of group) {
+          offsets.push(offset);
+          offset += t.loopLength ?? project.stepCount;
+        }
+
+        return (
+          <div key={rootTrack.id} className="chain-group">
+            {group.map((track, groupIdx) => {
+              const idx = project.tracks.indexOf(track);
+              const isLast = groupIdx === group.length - 1;
+              const trackLen = track.loopLength ?? project.stepCount;
+              const trackOffset = offsets[groupIdx];
+              // Only show beat indicator when this track is the one currently playing
+              let chainStep = -1;
+              if (currentStep >= 0) {
+                const cyclePos = currentStep % chainUsedSteps;
+                if (
+                  cyclePos >= trackOffset &&
+                  cyclePos < trackOffset + trackLen
+                ) {
+                  chainStep = cyclePos - trackOffset;
+                }
+              }
+              return (
+                <div key={track.id} className="chain-track-wrapper">
+                  <Track
+                    track={track}
+                    color={getTrackColor(idx)}
+                    currentStep={chainStep}
+                    stepCount={project.stepCount}
+                    onToggleStep={(row, col) =>
+                      onToggleStep(track.id, row, col)
+                    }
+                    onSetStep={(row, col, active) =>
+                      onSetStep(track.id, row, col, active)
+                    }
+                    onSetSound={(sound) => onSetSound(track.id, sound)}
+                    onSetBank={(bank) => onSetBank(track.id, bank)}
+                    onToggleMute={() => onToggleMute(track.id)}
+                    onToggleSolo={() => onToggleSolo(track.id)}
+                    onSetVolume={(vol) => onSetVolume(track.id, vol)}
+                    onRemove={() => onRemoveTrack(track.id)}
+                    onSetName={(name) => onSetTrackName(track.id, name)}
+                    onAddDrumRow={(sound) => onAddDrumRow(track.id, sound)}
+                    onRemoveDrumRow={(idx) => onRemoveDrumRow(track.id, idx)}
+                    onPreviewRow={(rowLabel) =>
+                      onPreviewRow(track.id, rowLabel)
+                    }
+                    onDuplicate={() => onDuplicateTrack(track.id)}
+                    onSetVelocity={(row, col, vel) =>
+                      onSetVelocity(track.id, row, col, vel)
+                    }
+                    onSetProbability={(row, col, prob) =>
+                      onSetProbability(track.id, row, col, prob)
+                    }
+                    polyrhythmMarkers={polyrhythmMarkersPerTrack?.[idx]}
+                    onSetEffects={(fx) => onSetEffects(track.id, fx)}
+                    onSetModifiers={(mods) => onSetModifiers(track.id, mods)}
+                    onSetLoopLength={(len) => onSetLoopLength(track.id, len)}
+                    onCopySteps={() => onCopySteps(track.id)}
+                    onPasteSteps={() => onPasteSteps(track.id)}
+                    onShiftPattern={(dir) => onShiftPattern(track.id, dir)}
+                    onRandomizePattern={(density) =>
+                      onRandomizePattern(track.id, density)
+                    }
+                    onClearTrack={() => onClearTrack(track.id)}
+                    onReverseSteps={() => onReverseSteps(track.id)}
+                    onInsertAfter={(type) => onInsertTrackAfter(track.id, type)}
+                    chainRemainingSteps={isLast ? chainRemaining : 0}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
 
       <div className="add-track-buttons">
         <button className="add-track-btn" onClick={() => onAddTrack("drums")}>

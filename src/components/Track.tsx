@@ -36,7 +36,11 @@ interface TrackProps {
   onRandomizePattern: (density: number) => void;
   onClearTrack: () => void;
   onReverseSteps: () => void;
-  onInsertAfter: (type: "drums" | "melodic" | "piano" | "guitar") => void;
+  onInsertAfter: (
+    type: "drums" | "melodic" | "piano" | "guitar",
+    customStepCount?: number,
+  ) => void;
+  chainRemainingSteps?: number;
 }
 
 export function Track({
@@ -70,6 +74,7 @@ export function Track({
   onClearTrack,
   onReverseSteps,
   onInsertAfter,
+  chainRemainingSteps,
 }: TrackProps) {
   // VU meter: calculate activity level at current step
   let vuLevel = 0;
@@ -112,6 +117,8 @@ export function Track({
         onRandomizePattern={onRandomizePattern}
         onClearTrack={onClearTrack}
         onReverseSteps={onReverseSteps}
+        onInsertAfter={onInsertAfter}
+        chainRemainingSteps={chainRemainingSteps}
       />
       <StepGrid
         track={track}

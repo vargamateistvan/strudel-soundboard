@@ -9,9 +9,33 @@ export function toMiniNotation(project: Project): string {
   const cps = bpm / 60 / 4;
   const lines: string[] = [`setcps(${cps})`];
 
-  const trackCodes = tracks
-    .map((t) => trackToMiniNotation(t))
-    .filter(Boolean) as string[];
+  // Group tracks into chains (sequential) and standalone
+  const chainedIds = new Set(
+    tracks.filter((t) => t.chainedWith).map((t) => t.id),
+  );
+  const trackCodes: string[] = [];
+
+  for (const track of tracks) {
+    if (chainedIds.has(track.id)) continue; // handled as part of a chain group
+    const children = tracks.filter((t) => t.chainedWith === track.id);
+    if (children.length > 0) {
+      // This is a chain root — collect all chain members
+      const group = [track, ...children];
+      const groupCodes = group
+        .map((t) => trackToMiniNotation(t))
+        .filter(Boolean) as string[];
+      if (groupCodes.length > 0) {
+        if (groupCodes.length === 1) {
+          trackCodes.push(groupCodes[0]);
+        } else {
+          trackCodes.push(`cat(\n    ${groupCodes.join(",\n    ")}\n  )`);
+        }
+      }
+    } else {
+      const code = trackToMiniNotation(track);
+      if (code) trackCodes.push(code);
+    }
+  }
 
   if (trackCodes.length === 0) {
     lines.push("// No active patterns");
