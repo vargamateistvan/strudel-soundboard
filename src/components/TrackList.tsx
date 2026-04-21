@@ -33,6 +33,7 @@ interface TrackListProps {
   onRemoveDrumRow: (trackId: string, rowIndex: number) => void;
   onPreviewRow: (trackId: string, rowLabel: string) => void;
   onReorderTracks: (fromIndex: number, toIndex: number) => void;
+  onReorderChain: (fromIndex: number, toIndex: number) => void;
   onDuplicateTrack: (trackId: string) => void;
   onSetVelocity: (
     trackId: string,
@@ -80,6 +81,7 @@ export function TrackList({
   onRemoveDrumRow,
   onPreviewRow,
   onReorderTracks,
+  onReorderChain,
   onDuplicateTrack,
   onSetVelocity,
   onSetProbability,
@@ -128,7 +130,7 @@ export function TrackList({
     (projectIdx: number, e: React.DragEvent) => {
       e.preventDefault();
       if (chainDragIdx !== null && chainDragIdx !== projectIdx) {
-        onReorderTracks(chainDragIdx, projectIdx);
+        onReorderChain(chainDragIdx, projectIdx);
       }
       setChainDragIdx(null);
       setChainOverIdx(null);

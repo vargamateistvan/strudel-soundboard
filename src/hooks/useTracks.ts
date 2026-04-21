@@ -178,7 +178,8 @@ type Action =
       probability: number;
     }
   | { type: "UNDO" }
-  | { type: "REDO" };
+  | { type: "REDO" }
+  | { type: "REORDER_CHAIN"; fromIndex: number; toIndex: number };
 
 function reducer(state: Project, action: Action): Project {
   switch (action.type) {
@@ -367,6 +368,51 @@ function reducer(state: Project, action: Action): Project {
       const tracks = [...state.tracks];
       const [moved] = tracks.splice(action.fromIndex, 1);
       tracks.splice(action.toIndex, 0, moved);
+      return { ...state, tracks };
+    }
+
+    case "REORDER_CHAIN": {
+      const movedTrack = state.tracks[action.fromIndex];
+      const targetTrack = state.tracks[action.toIndex];
+      if (!movedTrack || !targetTrack) return state;
+
+      // Find the chain root
+      const chainRoot = movedTrack.chainedWith ?? movedTrack.id;
+
+      // Collect the full chain group in current order
+      const rootTrack = state.tracks.find((t) => t.id === chainRoot);
+      if (!rootTrack) return state;
+      const chainGroup = [
+        rootTrack,
+        ...state.tracks.filter((t) => t.chainedWith === chainRoot),
+      ];
+
+      // Find positions within the chain group
+      const fromGroupIdx = chainGroup.indexOf(movedTrack);
+      const toGroupIdx = chainGroup.indexOf(targetTrack);
+      if (fromGroupIdx === -1 || toGroupIdx === -1) return state;
+
+      // Reorder within the group
+      const newGroup = [...chainGroup];
+      const [moved] = newGroup.splice(fromGroupIdx, 1);
+      newGroup.splice(toGroupIdx, 0, moved);
+
+      // The first track in the new group becomes the root (no chainedWith)
+      const newRootId = newGroup[0].id;
+
+      // Rebuild the tracks array: replace chain members in their original positions
+      // with the reordered group, updating chainedWith
+      const tracks = [...state.tracks];
+      const chainPositions = chainGroup
+        .map((t) => tracks.indexOf(t))
+        .sort((a, b) => a - b);
+      for (let i = 0; i < chainPositions.length; i++) {
+        const reordered = newGroup[i];
+        tracks[chainPositions[i]] = {
+          ...reordered,
+          chainedWith: i === 0 ? undefined : newRootId,
+        };
+      }
       return { ...state, tracks };
     }
 
@@ -761,6 +807,10 @@ export function useTracks() {
     dispatch({ type: "REORDER_TRACKS", fromIndex, toIndex });
   }, []);
 
+  const reorderChain = useCallback((fromIndex: number, toIndex: number) => {
+    dispatch({ type: "REORDER_CHAIN", fromIndex, toIndex });
+  }, []);
+
   const duplicateTrack = useCallback((trackId: string) => {
     dispatch({ type: "DUPLICATE_TRACK", trackId });
   }, []);
@@ -890,6 +940,7 @@ export function useTracks() {
     newProject,
     addPresetTracks,
     reorderTracks,
+    reorderChain,
     duplicateTrack,
     setVelocity,
     setProbability,

@@ -106,15 +106,22 @@ export default function App() {
   const isPlayingRef = useRef(strudel.isPlaying);
   isPlayingRef.current = strudel.isPlaying;
 
-  // Re-evaluate pattern live when tracks change while playing
+  // Re-evaluate pattern live when tracks change while playing (debounced to reduce stuttering)
+  const reEvalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!isPlayingRef.current) return;
-    const code = buildPatternCode(tracks.project);
-    if (!code) {
-      strudel.stop();
-      return;
-    }
-    strudel.play(code);
+    if (reEvalTimerRef.current) clearTimeout(reEvalTimerRef.current);
+    reEvalTimerRef.current = setTimeout(() => {
+      const code = buildPatternCode(tracks.project);
+      if (!code) {
+        strudel.stop();
+        return;
+      }
+      strudel.play(code);
+    }, 120);
+    return () => {
+      if (reEvalTimerRef.current) clearTimeout(reEvalTimerRef.current);
+    };
   }, [tracks.project]); // intentionally omit strudel to avoid loop
 
   // Step position indicator using interval synced to BPM
@@ -243,6 +250,7 @@ export default function App() {
               if (track) handlePreviewRow(track, rowLabel);
             }}
             onReorderTracks={tracks.reorderTracks}
+            onReorderChain={tracks.reorderChain}
             onDuplicateTrack={tracks.duplicateTrack}
             onSetVelocity={tracks.setVelocity}
             onSetProbability={tracks.setProbability}
