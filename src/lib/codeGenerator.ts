@@ -21,15 +21,16 @@ export function toMiniNotation(project: Project): string {
     if (children.length > 0) {
       // This is a chain root — collect all chain members
       const group = [track, ...children];
-      const groupCodes = group
-        .map((t) => trackToMiniNotation(t))
-        .filter(Boolean) as string[];
-      if (groupCodes.length > 0) {
-        if (groupCodes.length === 1) {
-          trackCodes.push(groupCodes[0]);
-        } else {
-          trackCodes.push(`cat(\n    ${groupCodes.join(",\n    ")}\n  )`);
-        }
+      if (group.length === 1) {
+        const code = trackToMiniNotation(track);
+        if (code) trackCodes.push(code);
+      } else {
+        const entries = group.map((t) => {
+          const weight = t.loopLength ?? project.stepCount;
+          const code = trackToMiniNotation(t) ?? `silence`;
+          return `[${weight}, ${code}]`;
+        });
+        trackCodes.push(`timeCat(\n    ${entries.join(",\n    ")}\n  )`);
       }
     } else {
       const code = trackToMiniNotation(track);

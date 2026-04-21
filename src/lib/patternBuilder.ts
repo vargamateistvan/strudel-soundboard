@@ -10,33 +10,45 @@ export function buildPatternCode(project: Project): string {
   const cps = bpm / 60 / 4; // cycles per second (1 cycle = 1 bar of 4 beats)
 
   const soloedTracks = tracks.filter((t) => t.solo);
-  const activeTracks =
-    soloedTracks.length > 0 ? soloedTracks : tracks.filter((t) => !t.muted);
+  const hasSolo = soloedTracks.length > 0;
 
-  if (activeTracks.length === 0) return "";
+  if (hasSolo && soloedTracks.length === 0) return "";
 
-  // Group into chains (sequential) and standalone
+  // Group chains from ALL tracks (not just active), so muting the root doesn't break the chain
   const chainedIds = new Set(
-    activeTracks.filter((t) => t.chainedWith).map((t) => t.id),
+    tracks.filter((t) => t.chainedWith).map((t) => t.id),
   );
   const patternCodes: string[] = [];
 
-  for (const track of activeTracks) {
+  for (const track of tracks) {
     if (chainedIds.has(track.id)) continue; // handled with its chain root
-    const children = activeTracks.filter((t) => t.chainedWith === track.id);
+    const children = tracks.filter((t) => t.chainedWith === track.id);
+
+    const isTrackActive = (t: Track) => (hasSolo ? t.solo : !t.muted);
+
     if (children.length > 0) {
       const group = [track, ...children];
-      const groupPatterns = group
-        .map((t) => buildTrackPattern(t))
-        .filter(Boolean) as string[];
-      if (groupPatterns.length > 0) {
-        if (groupPatterns.length === 1) {
-          patternCodes.push(groupPatterns[0]);
-        } else {
-          patternCodes.push(`cat(\n    ${groupPatterns.join(",\n    ")}\n  )`);
+      // Check if any track in the chain is active
+      if (!group.some(isTrackActive)) continue;
+
+      const groupEntries = group.map((t) => {
+        const weight = t.loopLength ?? project.stepCount;
+        const pattern = isTrackActive(t) ? buildTrackPattern(t) : null;
+        // Muted tracks become silence but keep their time slot
+        const code = pattern ?? `silence`;
+        return { weight, code };
+      });
+      if (groupEntries.length === 1) {
+        if (isTrackActive(group[0])) {
+          const p = buildTrackPattern(group[0]);
+          if (p) patternCodes.push(p);
         }
+      } else {
+        const entries = groupEntries.map((e) => `[${e.weight}, ${e.code}]`);
+        patternCodes.push(`timeCat(\n    ${entries.join(",\n    ")}\n  )`);
       }
     } else {
+      if (!isTrackActive(track)) continue;
       const code = buildTrackPattern(track);
       if (code) patternCodes.push(code);
     }

@@ -327,7 +327,7 @@ export function TrackList({
                 return (
                   <div
                     key={track.id}
-                    className={`chain-header-item${chainDragIdx === idx ? " chain-dragging" : ""}${chainOverIdx === idx && chainDragIdx !== idx ? " chain-drag-over" : ""}`}
+                    className={`chain-header-item${chainDragIdx === idx ? " chain-dragging" : ""}${chainOverIdx === idx && chainDragIdx !== idx ? " chain-drag-over" : ""}${track.muted ? " track-muted" : ""}`}
                     draggable
                     onDragStart={(e) => handleChainDragStart(idx, e)}
                     onDragOver={(e) => handleChainDragOver(idx, e)}
@@ -390,7 +390,7 @@ export function TrackList({
                 return (
                   <div
                     key={track.id}
-                    className="chain-grid-item"
+                    className={`chain-grid-item${track.muted ? " track-muted" : ""}`}
                     style={
                       {
                         "--track-color": getTrackColor(track.colorIndex ?? idx),
