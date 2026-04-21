@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-// @ts-expect-error — lamejs uses commonjs exports
-import lamejs from "lamejs";
+// @ts-expect-error — loading lamejs source as raw string to avoid Vite CJS scope issues
+import lameAllSource from "lamejs/lame.all.js?raw";
 import {
   installAudioTap,
   addTapTarget,
@@ -12,137 +12,121 @@ function floatTo16Bit(f: number): number {
   return v < 0 ? v * 0x8000 : v * 0x7fff;
 }
 
-const WORKLET_CODE = `
-class RecorderProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this._active = true;
-    this.port.onmessage = (e) => {
-      if (e.data === 'stop') this._active = false;
-    };
+// Load lamejs by evaluating the self-contained bundle in a single scope
+// This avoids Vite's CJS transform which breaks internal MPEGMode references
+let _lame: {
+  Mp3Encoder: new (
+    channels: number,
+    sampleRate: number,
+    bitRate: number,
+  ) => any;
+} | null = null;
+function getLamejs() {
+  if (!_lame) {
+    const fn = new Function(lameAllSource + "\nreturn lamejs;");
+    _lame = fn();
   }
-  process(inputs) {
-    if (!this._active) return false;
-    const input = inputs[0];
-    if (input && input.length > 0) {
-      const left = new Float32Array(input[0]);
-      const right = input.length > 1 ? new Float32Array(input[1]) : new Float32Array(input[0]);
-      this.port.postMessage({ left, right }, [left.buffer, right.buffer]);
-    }
-    return true;
-  }
+  return _lame!;
 }
-registerProcessor('recorder-processor', RecorderProcessor);
-`;
 
 export function useRecorder() {
   const [isRecording, setIsRecording] = useState(false);
-  const leftChunksRef = useRef<Float32Array[]>([]);
-  const rightChunksRef = useRef<Float32Array[]>([]);
-  const sampleRateRef = useRef(44100);
-  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
-  const streamCtxRef = useRef<AudioContext | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const destRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
 
   const startRecording = useCallback(async () => {
     // @ts-expect-error — getAudioContext is exported but not typed
     const { getAudioContext } = await import("@strudel/web");
     const ctx = getAudioContext() as AudioContext;
-    sampleRateRef.current = ctx.sampleRate;
+    ctxRef.current = ctx;
 
-    // Use MediaStreamDestination to reliably capture all audio
+    // Create a MediaStreamDestination to capture all audio
     const dest = ctx.createMediaStreamDestination();
     destRef.current = dest;
-
-    // Create a secondary AudioContext to read from the MediaStreamDestination
-    const streamCtx = new AudioContext({ sampleRate: ctx.sampleRate });
-    streamCtxRef.current = streamCtx;
-    const source = streamCtx.createMediaStreamSource(dest.stream);
-
-    leftChunksRef.current = [];
-    rightChunksRef.current = [];
-
-    // Register the AudioWorklet processor via Blob URL
-    const blob = new Blob([WORKLET_CODE], { type: "application/javascript" });
-    const workletUrl = URL.createObjectURL(blob);
-    await streamCtx.audioWorklet.addModule(workletUrl);
-    URL.revokeObjectURL(workletUrl);
-
-    const workletNode = new AudioWorkletNode(streamCtx, "recorder-processor");
-    workletNode.port.onmessage = (
-      e: MessageEvent<{ left: Float32Array; right: Float32Array }>,
-    ) => {
-      leftChunksRef.current.push(e.data.left);
-      rightChunksRef.current.push(e.data.right);
-    };
-
-    source.connect(workletNode);
-    workletNode.connect(streamCtx.destination);
-    workletNodeRef.current = workletNode;
 
     // Register the capture destination as a tap target
     installAudioTap(ctx);
     addTapTarget(dest);
 
+    // Use MediaRecorder to capture the stream
+    chunksRef.current = [];
+    const mediaRecorder = new MediaRecorder(dest.stream);
+    recorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (e: BlobEvent) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    mediaRecorder.start(100); // collect data every 100ms
     setIsRecording(true);
   }, []);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     setIsRecording(false);
 
-    // Clean up AudioWorklet node
-    const workletNode = workletNodeRef.current;
-    if (workletNode) {
-      workletNode.port.postMessage("stop");
-      try {
-        workletNode.disconnect();
-      } catch {
-        /* ignore */
-      }
-      workletNodeRef.current = null;
+    const mediaRecorder = recorderRef.current;
+    const ctx = ctxRef.current;
+
+    if (!mediaRecorder || mediaRecorder.state === "inactive") {
+      console.warn("No active recorder.");
+      return;
     }
 
-    // Close the secondary AudioContext
-    const streamCtx = streamCtxRef.current;
-    if (streamCtx) {
-      streamCtx.close().catch(() => {});
-      streamCtxRef.current = null;
-    }
+    // Wait for the recorder to finish
+    const recordingDone = new Promise<void>((resolve) => {
+      mediaRecorder.onstop = () => resolve();
+    });
+    mediaRecorder.stop();
+    await recordingDone;
+    recorderRef.current = null;
 
+    // Remove the tap target
     const dest = destRef.current;
     destRef.current = null;
+    if (dest) removeTapTarget(dest);
 
-    // Remove the capture destination from the shared audio tap
-    if (dest) {
-      removeTapTarget(dest);
-    }
+    const chunks = chunksRef.current;
+    chunksRef.current = [];
 
-    // Merge all captured chunks
-    const leftChunks = leftChunksRef.current;
-    const rightChunks = rightChunksRef.current;
-    leftChunksRef.current = [];
-    rightChunksRef.current = [];
-
-    if (leftChunks.length === 0) {
+    if (chunks.length === 0) {
       console.warn("No audio was captured during recording.");
       return;
     }
 
-    const totalLen = leftChunks.reduce((sum, c) => sum + c.length, 0);
-    if (totalLen === 0) return;
+    // Decode captured audio to PCM using Web Audio API
+    const recordedBlob = new Blob(chunks, { type: chunks[0].type });
+    const arrayBuffer = await recordedBlob.arrayBuffer();
 
-    const leftPCM = new Float32Array(totalLen);
-    const rightPCM = new Float32Array(totalLen);
-    let offset = 0;
-    for (let i = 0; i < leftChunks.length; i++) {
-      leftPCM.set(leftChunks[i], offset);
-      rightPCM.set(rightChunks[i] ?? leftChunks[i], offset);
-      offset += leftChunks[i].length;
+    let audioBuffer: AudioBuffer;
+    try {
+      // Use offline context for decoding to avoid issues with suspended contexts
+      const decodeCtx = ctx ?? new AudioContext();
+      audioBuffer = await decodeCtx.decodeAudioData(arrayBuffer);
+    } catch (err) {
+      console.error("Failed to decode recorded audio:", err);
+      // Fallback: download as webm
+      downloadBlob(recordedBlob, "audio/webm", "webm");
+      return;
+    }
+
+    const sampleRate = audioBuffer.sampleRate;
+    const leftPCM = audioBuffer.getChannelData(0);
+    const rightPCM =
+      audioBuffer.numberOfChannels > 1
+        ? audioBuffer.getChannelData(1)
+        : leftPCM;
+    const totalLen = leftPCM.length;
+
+    if (totalLen === 0) {
+      console.warn("Decoded audio is empty.");
+      return;
     }
 
     // Encode to MP3 using lamejs
-    const sampleRate = sampleRateRef.current;
-    const mp3enc = new lamejs.Mp3Encoder(2, sampleRate, 192);
+    const lame = getLamejs();
+    const mp3enc = new lame.Mp3Encoder(2, sampleRate, 192);
     const blockSize = 1152;
     const mp3Bufs: Uint8Array[] = [];
 
@@ -166,37 +150,33 @@ export function useRecorder() {
     }
 
     const mp3Blob = new Blob(mp3Bufs as BlobPart[], { type: "audio/mpeg" });
-    const url = URL.createObjectURL(mp3Blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.style.display = "none";
-    const ts = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-    a.download = `strudel-recording-${ts}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 1000);
+    downloadBlob(mp3Blob, "audio/mpeg", "mp3");
   }, []);
 
   // Cleanup on unmount if still recording
   useEffect(() => {
     return () => {
-      if (workletNodeRef.current) {
-        workletNodeRef.current.port.postMessage("stop");
-        try {
-          workletNodeRef.current.disconnect();
-        } catch {
-          /* ignore */
-        }
+      if (recorderRef.current && recorderRef.current.state !== "inactive") {
+        recorderRef.current.stop();
       }
-      streamCtxRef.current?.close().catch(() => {});
       if (destRef.current) removeTapTarget(destRef.current);
-      leftChunksRef.current = [];
-      rightChunksRef.current = [];
     };
   }, []);
 
   return { isRecording, startRecording, stopRecording };
+}
+
+function downloadBlob(blob: Blob, _mimeType: string, ext: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.style.display = "none";
+  const ts = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+  a.download = `strudel-recording-${ts}.${ext}`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 5000);
 }

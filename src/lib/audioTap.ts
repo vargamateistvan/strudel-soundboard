@@ -5,6 +5,7 @@
  */
 
 const tapTargets = new Set<AudioNode>();
+const connectedSources = new Set<WeakRef<AudioNode>>();
 let originalConnect: typeof AudioNode.prototype.connect | null = null;
 let patchedDestination: AudioDestinationNode | null = null;
 
@@ -22,6 +23,7 @@ export function installAudioTap(ctx: AudioContext): void {
 
   originalConnect = AudioNode.prototype.connect;
   patchedDestination = ctx.destination;
+  connectedSources.clear();
 
   const saved = originalConnect;
   const dest = patchedDestination;
@@ -29,6 +31,7 @@ export function installAudioTap(ctx: AudioContext): void {
   AudioNode.prototype.connect = function (this: AudioNode, ...args: unknown[]) {
     const result = (saved as Function).apply(this, args);
     if (args[0] === dest) {
+      connectedSources.add(new WeakRef(this));
       for (const target of tapTargets) {
         try {
           (saved as Function).call(this, target);
@@ -44,6 +47,19 @@ export function installAudioTap(ctx: AudioContext): void {
 /** Add a node that will receive a copy of all audio going to ctx.destination. */
 export function addTapTarget(node: AudioNode): void {
   tapTargets.add(node);
+  // Retroactively connect sources that already connected to destination
+  if (originalConnect) {
+    for (const ref of connectedSources) {
+      const source = ref.deref();
+      if (source) {
+        try {
+          originalConnect.call(source, node);
+        } catch {
+          // ignore — node may have been disposed
+        }
+      }
+    }
+  }
 }
 
 /** Remove a previously added tap target. */
