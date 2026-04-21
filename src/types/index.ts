@@ -59,6 +59,7 @@ export interface Track {
   modifiers?: TrackModifiers;
   loopLength?: number; // if set, pattern loops at this many steps (e.g. 4, 8)
   chainedWith?: string; // ID of the track this is chained after (plays sequentially)
+  colorIndex?: number; // stable index into TRACK_COLORS, persists across reorder
 }
 
 export interface Project {

@@ -26,7 +26,7 @@ export function Visualizer({
   const getBarData = useCallback(() => {
     const bars: { color: string; velocity: number; muted: boolean }[] = [];
     project.tracks.forEach((track, ti) => {
-      const color = getTrackColor(ti);
+      const color = getTrackColor(track.colorIndex ?? ti);
       for (let r = 0; r < track.steps.length; r++) {
         const step = currentStep >= 0 ? track.steps[r][currentStep] : undefined;
         const velocity = step?.active ? step.velocity * track.volume : 0;

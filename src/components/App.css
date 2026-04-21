@@ -144,8 +144,8 @@ body::after {
   min-width: 280px;
   flex-shrink: 0;
   position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 24px);
+  top: 80px;
+  max-height: calc(100vh - 74px);
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -449,6 +449,21 @@ body::after {
   width: 100%;
   min-width: 0;
   border-right: none;
+}
+
+/* Chain header drag states */
+.chain-header-item {
+  cursor: grab;
+}
+
+.chain-header-item.chain-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.chain-header-item.chain-drag-over {
+  border-top: 3px solid var(--neon-cyan);
+  box-shadow: 0 -2px 8px rgba(0, 255, 247, 0.4);
 }
 
 .chain-grids {

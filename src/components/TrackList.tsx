@@ -98,6 +98,49 @@ export function TrackList({
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
+  // Chain-internal drag state (tracks project-level indices)
+  const [chainDragIdx, setChainDragIdx] = useState<number | null>(null);
+  const [chainOverIdx, setChainOverIdx] = useState<number | null>(null);
+
+  const handleChainDragStart = useCallback(
+    (projectIdx: number, e: React.DragEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === "SELECT" || tag === "INPUT" || tag === "BUTTON") {
+        e.preventDefault();
+        return;
+      }
+      setChainDragIdx(projectIdx);
+      e.dataTransfer.effectAllowed = "move";
+    },
+    [],
+  );
+
+  const handleChainDragOver = useCallback(
+    (projectIdx: number, e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setChainOverIdx(projectIdx);
+    },
+    [],
+  );
+
+  const handleChainDrop = useCallback(
+    (projectIdx: number, e: React.DragEvent) => {
+      e.preventDefault();
+      if (chainDragIdx !== null && chainDragIdx !== projectIdx) {
+        onReorderTracks(chainDragIdx, projectIdx);
+      }
+      setChainDragIdx(null);
+      setChainOverIdx(null);
+    },
+    [chainDragIdx, onReorderTracks],
+  );
+
+  const handleChainDragEnd = useCallback(() => {
+    setChainDragIdx(null);
+    setChainOverIdx(null);
+  }, []);
+
   const handleDragStart = useCallback((idx: number, e: React.DragEvent) => {
     // Don't start drag from interactive elements
     const tag = (e.target as HTMLElement).tagName;
@@ -205,7 +248,7 @@ export function TrackList({
             >
               <Track
                 track={track}
-                color={getTrackColor(idx)}
+                color={getTrackColor(track.colorIndex ?? idx)}
                 currentStep={currentStep}
                 stepCount={project.stepCount}
                 onToggleStep={(row, col) => onToggleStep(track.id, row, col)}
@@ -269,7 +312,9 @@ export function TrackList({
             key={rootTrack.id}
             className="chain-group"
             style={
-              { "--track-color": getTrackColor(rootIdx) } as React.CSSProperties
+              {
+                "--track-color": getTrackColor(rootTrack.colorIndex ?? rootIdx),
+              } as React.CSSProperties
             }
           >
             {/* Left: stacked headers */}
@@ -280,10 +325,15 @@ export function TrackList({
                 return (
                   <div
                     key={track.id}
-                    className="chain-header-item"
+                    className={`chain-header-item${chainDragIdx === idx ? " chain-dragging" : ""}${chainOverIdx === idx && chainDragIdx !== idx ? " chain-drag-over" : ""}`}
+                    draggable
+                    onDragStart={(e) => handleChainDragStart(idx, e)}
+                    onDragOver={(e) => handleChainDragOver(idx, e)}
+                    onDrop={(e) => handleChainDrop(idx, e)}
+                    onDragEnd={handleChainDragEnd}
                     style={
                       {
-                        "--track-color": getTrackColor(idx),
+                        "--track-color": getTrackColor(track.colorIndex ?? idx),
                       } as React.CSSProperties
                     }
                   >
@@ -341,13 +391,13 @@ export function TrackList({
                     className="chain-grid-item"
                     style={
                       {
-                        "--track-color": getTrackColor(idx),
+                        "--track-color": getTrackColor(track.colorIndex ?? idx),
                       } as React.CSSProperties
                     }
                   >
                     <StepGrid
                       track={track}
-                      color={getTrackColor(idx)}
+                      color={getTrackColor(track.colorIndex ?? idx)}
                       currentStep={chainStep}
                       onToggleStep={(row, col) =>
                         onToggleStep(track.id, row, col)

@@ -14,6 +14,7 @@ import {
   MELODIC_NOTES,
   PIANO_SOUNDS,
   GUITAR_SOUNDS,
+  TRACK_COLORS,
 } from "../lib/constants";
 import { autoSave, autoLoad } from "../lib/projectSerializer";
 
@@ -31,6 +32,17 @@ function countTracksOfType(tracks: Track[], type: Track["type"]): number {
   return tracks.filter((t) => t.type === type).length;
 }
 
+/** Find the lowest color index not already used by existing tracks */
+function nextColorIndex(tracks: Track[]): number {
+  const used = new Set(
+    tracks.map((t) => t.colorIndex).filter((c) => c !== undefined),
+  );
+  for (let i = 0; i < TRACK_COLORS.length; i++) {
+    if (!used.has(i)) return i;
+  }
+  return tracks.length % TRACK_COLORS.length;
+}
+
 function createDrumTrack(stepCount: number, existingTracks: Track[]): Track {
   const n = countTracksOfType(existingTracks, "drums") + 1;
   const rows = [...DEFAULT_DRUM_ROWS];
@@ -46,6 +58,7 @@ function createDrumTrack(stepCount: number, existingTracks: Track[]): Track {
     solo: false,
     volume: 1,
     effects: { ...DEFAULT_EFFECTS },
+    colorIndex: nextColorIndex(existingTracks),
   };
 }
 
@@ -64,6 +77,7 @@ function createMelodicTrack(stepCount: number, existingTracks: Track[]): Track {
     solo: false,
     volume: 1,
     effects: { ...DEFAULT_EFFECTS },
+    colorIndex: nextColorIndex(existingTracks),
   };
 }
 
@@ -82,6 +96,7 @@ function createPianoTrack(stepCount: number, existingTracks: Track[]): Track {
     solo: false,
     volume: 1,
     effects: { ...DEFAULT_EFFECTS },
+    colorIndex: nextColorIndex(existingTracks),
   };
 }
 
@@ -100,6 +115,7 @@ function createGuitarTrack(stepCount: number, existingTracks: Track[]): Track {
     solo: false,
     volume: 1,
     effects: { ...DEFAULT_EFFECTS },
+    colorIndex: nextColorIndex(existingTracks),
   };
 }
 
@@ -330,17 +346,22 @@ function reducer(state: Project, action: Action): Project {
     case "IMPORT_PROJECT":
       return { ...action.project };
 
-    case "ADD_PRESET_TRACKS":
+    case "ADD_PRESET_TRACKS": {
+      let allTracks = [...state.tracks];
+      const newTracks = action.tracks.map((t) => {
+        const nt = {
+          ...t,
+          id: generateTrackId(),
+          colorIndex: nextColorIndex(allTracks),
+        };
+        allTracks.push(nt);
+        return nt;
+      });
       return {
         ...state,
-        tracks: [
-          ...state.tracks,
-          ...action.tracks.map((t) => ({
-            ...t,
-            id: generateTrackId(),
-          })),
-        ],
+        tracks: [...state.tracks, ...newTracks],
       };
+    }
 
     case "REORDER_TRACKS": {
       const tracks = [...state.tracks];
@@ -352,15 +373,16 @@ function reducer(state: Project, action: Action): Project {
     case "DUPLICATE_TRACK": {
       const src = state.tracks.find((t) => t.id === action.trackId);
       if (!src) return state;
+      const idx = state.tracks.findIndex((t) => t.id === action.trackId);
+      const tracks = [...state.tracks];
       const clone: Track = {
         ...src,
         id: generateTrackId(),
         name: `${src.name} copy`,
         steps: src.steps.map((row) => row.map((s) => ({ ...s }))),
         rows: [...src.rows],
+        colorIndex: nextColorIndex(tracks),
       };
-      const idx = state.tracks.findIndex((t) => t.id === action.trackId);
-      const tracks = [...state.tracks];
       tracks.splice(idx + 1, 0, clone);
       return { ...state, tracks };
     }
