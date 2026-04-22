@@ -25,10 +25,47 @@ export function Visualizer({
   // Collect all rows across all tracks with their colors and current velocity
   const getBarData = useCallback(() => {
     const bars: { color: string; velocity: number; muted: boolean }[] = [];
+
+    // Build chain offset map: for each track id, compute its local step within its chain
+    // (or just use loopLength modulo for standalone tracks)
+    const chainRoots = project.tracks.filter((t) => !t.chainedWith);
+    const trackLocalStep = new Map<string, number>();
+
+    for (const root of chainRoots) {
+      const children = project.tracks.filter((t) => t.chainedWith === root.id);
+      if (children.length === 0) {
+        // Standalone track
+        const len = root.loopLength ?? project.stepCount;
+        const local = currentStep >= 0 ? currentStep % len : -1;
+        trackLocalStep.set(root.id, local);
+      } else {
+        // Chained group — compute offsets like TrackList does
+        const group = [root, ...children];
+        const chainUsedSteps = group.reduce(
+          (sum, t) => sum + (t.loopLength ?? project.stepCount),
+          0,
+        );
+        let offset = 0;
+        for (const t of group) {
+          const trackLen = t.loopLength ?? project.stepCount;
+          let local = -1;
+          if (currentStep >= 0) {
+            const cyclePos = currentStep % chainUsedSteps;
+            if (cyclePos >= offset && cyclePos < offset + trackLen) {
+              local = cyclePos - offset;
+            }
+          }
+          trackLocalStep.set(t.id, local);
+          offset += trackLen;
+        }
+      }
+    }
+
     project.tracks.forEach((track, ti) => {
       const color = getTrackColor(track.colorIndex ?? ti);
+      const localStep = trackLocalStep.get(track.id) ?? -1;
       for (let r = 0; r < track.steps.length; r++) {
-        const step = currentStep >= 0 ? track.steps[r][currentStep] : undefined;
+        const step = localStep >= 0 ? track.steps[r][localStep] : undefined;
         const velocity = step?.active ? step.velocity * track.volume : 0;
         bars.push({ color, velocity, muted: track.muted });
       }
