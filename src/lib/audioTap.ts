@@ -51,12 +51,14 @@ export function addTapTarget(node: AudioNode): void {
   if (originalConnect) {
     for (const ref of connectedSources) {
       const source = ref.deref();
-      if (source) {
-        try {
-          (originalConnect as Function).call(source, node);
-        } catch {
-          // ignore — node may have been disposed
-        }
+      if (!source) {
+        connectedSources.delete(ref);
+        continue;
+      }
+      try {
+        (originalConnect as Function).call(source, node);
+      } catch {
+        // ignore — node may have been disposed
       }
     }
   }

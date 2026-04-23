@@ -16,7 +16,6 @@ interface StepGridProps {
   color: string;
   currentStep: number;
   polyrhythmMarkers?: Set<number>;
-  onToggleStep: (row: number, col: number) => void;
   onSetStep: (row: number, col: number, active: boolean) => void;
   onRemoveDrumRow: (rowIndex: number) => void;
   onPreviewRow: (rowLabel: string) => void;

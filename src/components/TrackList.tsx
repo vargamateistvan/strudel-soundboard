@@ -16,7 +16,6 @@ interface TrackListProps {
   currentStep: number;
   onAddTrack: (type: "drums" | "melodic" | "piano" | "guitar") => void;
   onRemoveTrack: (trackId: string) => void;
-  onToggleStep: (trackId: string, row: number, col: number) => void;
   onSetStep: (
     trackId: string,
     row: number,
@@ -69,7 +68,6 @@ export function TrackList({
   currentStep,
   onAddTrack,
   onRemoveTrack,
-  onToggleStep,
   onSetStep,
   onSetSound,
   onSetBank,
@@ -135,7 +133,7 @@ export function TrackList({
       setChainDragIdx(null);
       setChainOverIdx(null);
     },
-    [chainDragIdx, onReorderTracks],
+    [chainDragIdx, onReorderChain],
   );
 
   const handleChainDragEnd = useCallback(() => {
@@ -253,7 +251,6 @@ export function TrackList({
                 color={getTrackColor(track.colorIndex ?? idx)}
                 currentStep={currentStep}
                 stepCount={project.stepCount}
-                onToggleStep={(row, col) => onToggleStep(track.id, row, col)}
                 onSetStep={(row, col, active) =>
                   onSetStep(track.id, row, col, active)
                 }
@@ -401,9 +398,6 @@ export function TrackList({
                       track={track}
                       color={getTrackColor(track.colorIndex ?? idx)}
                       currentStep={chainStep}
-                      onToggleStep={(row, col) =>
-                        onToggleStep(track.id, row, col)
-                      }
                       onSetStep={(row, col, active) =>
                         onSetStep(track.id, row, col, active)
                       }

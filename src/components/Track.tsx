@@ -11,7 +11,6 @@ interface TrackProps {
   color: string;
   currentStep: number;
   stepCount: number;
-  onToggleStep: (row: number, col: number) => void;
   onSetStep: (row: number, col: number, active: boolean) => void;
   onSetSound: (sound: string) => void;
   onSetBank: (bank: string) => void;
@@ -48,7 +47,6 @@ export function Track({
   color,
   currentStep,
   stepCount,
-  onToggleStep,
   onSetStep,
   onSetSound,
   onSetBank,
@@ -124,7 +122,6 @@ export function Track({
         track={track}
         color={color}
         currentStep={currentStep}
-        onToggleStep={onToggleStep}
         onSetStep={onSetStep}
         onRemoveDrumRow={onRemoveDrumRow}
         onPreviewRow={onPreviewRow}

@@ -235,7 +235,6 @@ export default function App() {
             currentStep={currentStep}
             onAddTrack={tracks.addTrack}
             onRemoveTrack={tracks.removeTrack}
-            onToggleStep={tracks.toggleStep}
             onSetStep={tracks.setStep}
             onSetSound={tracks.setSound}
             onSetBank={tracks.setBank}

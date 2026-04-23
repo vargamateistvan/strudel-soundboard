@@ -103,8 +103,13 @@ export function downloadProject(name: string, project: Project): void {
   const a = document.createElement("a");
   a.href = url;
   a.download = `${name}.strudel.json`;
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 5000);
 }
 
 export function uploadProject(file: File): Promise<Project> {

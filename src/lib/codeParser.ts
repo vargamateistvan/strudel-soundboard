@@ -30,13 +30,13 @@ export function fromMiniNotation(code: string): ParseResult {
 
   // Extract stack contents, $: patterns, or single pattern
   let patternBodies: string[] = [];
-  const stackMatch = code.match(/stack\(\s*([\s\S]*)\s*\)/);
+  const stackInner = extractStackInner(code);
 
   // Check for $: multi-pattern syntax
   const dollarPatterns = code.match(/(?:_?\$:\s*)((?:(?!\n_?\$:)[\s\S])*)/g);
 
-  if (stackMatch) {
-    patternBodies = splitTopLevel(stackMatch[1]);
+  if (stackInner !== null) {
+    patternBodies = splitTopLevel(stackInner);
   } else if (dollarPatterns && dollarPatterns.length > 0) {
     patternBodies = dollarPatterns.map((p) =>
       p.replace(/^_?\$:\s*/, "").trim(),
@@ -474,6 +474,40 @@ function parseScaleTrack(
     volume,
     effects: { ...DEFAULT_EFFECTS },
   };
+}
+
+/**
+ * Extract the inner content of the first `stack(...)` call in `code`,
+ * using bracket-balanced walking instead of a greedy regex.
+ * Handles trailing method chains like `.swing(0.3)` correctly.
+ */
+function extractStackInner(code: string): string | null {
+  const keywordIdx = code.indexOf("stack(");
+  if (keywordIdx === -1) return null;
+  let depth = 0;
+  let contentStart = -1;
+  let inString = false;
+  let stringChar = "";
+  for (let i = keywordIdx + 5; i < code.length; i++) {
+    const ch = code[i];
+    if (inString) {
+      if (ch === stringChar && code[i - 1] !== "\\") inString = false;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      inString = true;
+      stringChar = ch;
+      continue;
+    }
+    if (ch === "(") {
+      if (depth === 0) contentStart = i + 1;
+      depth++;
+    } else if (ch === ")") {
+      depth--;
+      if (depth === 0) return code.slice(contentStart, i);
+    }
+  }
+  return null;
 }
 
 /**

@@ -12,8 +12,6 @@ export function buildPatternCode(project: Project): string {
   const soloedTracks = tracks.filter((t) => t.solo);
   const hasSolo = soloedTracks.length > 0;
 
-  if (hasSolo && soloedTracks.length === 0) return "";
-
   // Group chains from ALL tracks (not just active), so muting the root doesn't break the chain
   const chainedIds = new Set(
     tracks.filter((t) => t.chainedWith).map((t) => t.id),
